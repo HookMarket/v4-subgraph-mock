@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, Pool, PoolManager, Swap, Token } from '../types/schema'
+import { Bundle, Hook, Pool, PoolManager, Swap, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI, ZERO_BD } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils/index'
@@ -37,6 +37,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const poolManager = PoolManager.load(poolManagerAddress)!
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
+  const hook = Hook.load(pool.hooks)!
 
   const token0 = Token.load(pool.token0)
   const token1 = Token.load(pool.token1)
@@ -92,6 +93,12 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     pool.feesUSD = pool.feesUSD.plus(feesUSD)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
+    // hook volume
+    hook.volumeUSD = hook.volumeUSD.plus(amountTotalUSDTracked)
+    hook.feesUSD = hook.feesUSD.plus(feesUSD)
+    hook.tradingVolumeUSD = hook.tradingVolumeUSD.plus(amountTotalUSDTracked)
+    hook.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD.plus(amountTotalUSDUntracked)
+
     // Update the pool with the new active liquidity, price, and tick.
     pool.liquidity = event.params.liquidity
     pool.tick = BigInt.fromI32(event.params.tick as i32)
@@ -138,6 +145,10 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
 
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)
     poolManager.totalValueLockedUSD = poolManager.totalValueLockedETH.times(bundle.ethPriceUSD)
+
+    // hook total value locked
+    hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
+    hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
 
     token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedETH).times(bundle.ethPriceUSD)
     token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedETH).times(bundle.ethPriceUSD)
@@ -216,5 +227,6 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     pool.save()
     token0.save()
     token1.save()
+    hook.save()
   }
 }

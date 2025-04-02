@@ -134,8 +134,8 @@ type Pool @entity {
   poolHourData: [PoolHourData!]! @derivedFrom(field: "pool")
   # daily snapshots of pool data
   poolDayData: [PoolDayData!]! @derivedFrom(field: "pool")
-  # hooks address
-  hooks: String!
+  # hooks reference
+  hooks: Hook!
   # derived fields
   modifyLiquiditys: [ModifyLiquidity!]! @derivedFrom(field: "pool")
   swaps: [Swap!]! @derivedFrom(field: "pool")
@@ -489,4 +489,29 @@ type Transfer @entity {
   origin: String!
   # pointer to position
   position: Position!
+}
+
+type Hook @entity {
+  # hook address
+  id: ID!
+  # number of pools using this hook
+  poolCount: BigInt!
+  # list of pools using this hook
+  pools: [Pool!]! @derivedFrom(field: "hooks")
+  # creation timestamp
+  createdAtTimestamp: BigInt!
+  # creation block number
+  createdAtBlockNumber: BigInt!
+  # total volume in USD for all pools using this hook
+  volumeUSD: BigDecimal!
+  # total fees in USD for all pools using this hook
+  feesUSD: BigDecimal!
+  # total value locked in ETH for all pools using this hook
+  totalValueLockedETH: BigDecimal!
+  # total value locked in USD for all pools using this hook
+  totalValueLockedUSD: BigDecimal!
+  # trading volume in USD for all pools using this hook
+  tradingVolumeUSD: BigDecimal!
+  # untracked trading volume in USD for all pools using this Hook
+  untrackedTradingVolumeUSD: BigDecimal!
 }

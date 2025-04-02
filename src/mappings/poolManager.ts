@@ -2,7 +2,7 @@ import { BigInt, log } from '@graphprotocol/graph-ts'
 
 import { Initialize as InitializeEvent } from '../types/PoolManager/PoolManager'
 import { PoolManager } from '../types/schema'
-import { Bundle, Pool, Token } from '../types/schema'
+import { Bundle, Hook, Pool, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ADDRESS_ZERO, ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { updatePoolDayData, updatePoolHourData } from '../utils/intervalUpdates'
@@ -60,6 +60,23 @@ export function handleInitializeHelper(
 
   poolManager.poolCount = poolManager.poolCount.plus(ONE_BI)
   const pool = new Pool(poolId)
+  let hook = Hook.load(event.params.hooks.toHexString())
+  if (hook === null) {
+    hook = new Hook(event.params.hooks.toHexString())
+    hook.poolCount = ZERO_BI
+    hook.createdAtTimestamp = event.block.timestamp
+    hook.createdAtBlockNumber = event.block.number
+  }
+
+  hook.poolCount = hook.poolCount.plus(ONE_BI)
+  hook.volumeUSD = ZERO_BD
+  hook.feesUSD = ZERO_BD
+  hook.totalValueLockedUSD = ZERO_BD
+  hook.totalValueLockedETH = ZERO_BD
+  hook.tradingVolumeUSD = ZERO_BD
+  hook.untrackedTradingVolumeUSD = ZERO_BD
+  hook.save()
+
   let token0 = Token.load(event.params.currency0.toHexString())
   let token1 = Token.load(event.params.currency1.toHexString())
 
@@ -132,7 +149,7 @@ export function handleInitializeHelper(
   pool.token0 = token0.id
   pool.token1 = token1.id
   pool.feeTier = BigInt.fromI32(event.params.fee)
-  pool.hooks = event.params.hooks.toHexString()
+  pool.hooks = hook.id
   pool.tickSpacing = BigInt.fromI32(event.params.tickSpacing)
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
