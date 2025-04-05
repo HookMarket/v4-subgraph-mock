@@ -73,6 +73,17 @@ type Token @entity {
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
 }
 
+type PoolUser @entity {
+  # Compound ID: poolAddress-userAddress
+  id: ID!
+  # Associated pool
+  pool: Pool!
+  # address
+  user: Bytes!
+  # first interaction timestamp
+  firstInteractionTimestamp: BigInt!
+}
+
 type Pool @entity {
   # pool address
   id: ID!
@@ -130,6 +141,10 @@ type Pool @entity {
   totalValueLockedUSDUntracked: BigDecimal!
   # Fields used to help derived relationship
   liquidityProviderCount: BigInt! # used to detect new exchanges
+  # users who have interacted with this pool
+  poolUsers: [PoolUser!]! @derivedFrom(field: "pool")
+  # total number of unique users who have interacted with this pool
+  uniqueUserCount: BigInt!
   # hourly snapshots of pool data
   poolHourData: [PoolHourData!]! @derivedFrom(field: "pool")
   # daily snapshots of pool data

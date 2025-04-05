@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, Hook, Pool, PoolManager, Swap, Token } from '../types/schema'
+import { Bundle, Hook, Pool, PoolManager, PoolUser, Swap, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI, ZERO_BD } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils/index'
@@ -38,6 +38,15 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
   const hook = Hook.load(pool.hooks)!
+  // if the pool user does not exist, create a new one
+  let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
+  if (!poolUser) {
+    poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
+    poolUser.pool = pool.id
+    poolUser.user = event.params.sender
+    poolUser.firstInteractionTimestamp = event.block.timestamp
+    pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
+  }
 
   const token0 = Token.load(pool.token0)
   const token1 = Token.load(pool.token1)

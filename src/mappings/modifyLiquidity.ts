@@ -1,7 +1,7 @@
 import { BigInt, log } from '@graphprotocol/graph-ts'
 
 import { ModifyLiquidity as ModifyLiquidityEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, ModifyLiquidity, Pool, PoolManager, Tick, Token } from '../types/schema'
+import { Bundle, ModifyLiquidity, Pool, PoolManager, PoolUser, Tick, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
@@ -39,6 +39,16 @@ export function handleModifyLiquidityHelper(
   if (poolManager === null) {
     log.debug('handleModifyLiquidityHelper: pool manager not found {}', [poolManagerAddress])
     return
+  }
+
+  // if the pool user does not exist, create a new one
+  let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
+  if (!poolUser) {
+    poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
+    poolUser.pool = pool.id
+    poolUser.user = event.params.sender
+    poolUser.firstInteractionTimestamp = event.block.timestamp
+    pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
   }
 
   const token0 = Token.load(pool.token0)

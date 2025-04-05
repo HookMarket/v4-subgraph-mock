@@ -174,6 +174,7 @@ export function handleInitializeHelper(
   pool.collectedFeesToken0 = ZERO_BD
   pool.collectedFeesToken1 = ZERO_BD
   pool.collectedFeesUSD = ZERO_BD
+  pool.uniqueUserCount = ZERO_BI
 
   pool.sqrtPrice = event.params.sqrtPriceX96
   pool.tick = BigInt.fromI32(event.params.tick)
