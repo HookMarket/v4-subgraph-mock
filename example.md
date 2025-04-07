@@ -94,7 +94,7 @@ Adding values ​​in the array
 }
 ```
 
-# Query all pools based on token0 and token1, and get the corresponding hook and trading volume
+# Query all pools based on token0 and token1, and get the corresponding hook, trading volume and total value locked
 
 ```
 {
@@ -105,6 +105,7 @@ Adding values ​​in the array
     hooks {
       id
       tradingVolumeUSD
+      totalValueLockedUSD
     }
   }
 }
