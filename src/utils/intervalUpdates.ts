@@ -6,9 +6,11 @@ import {
   PoolDayData,
   PoolHourData,
   PoolManager,
+  PoolMinuteData,
   Token,
   TokenDayData,
   TokenHourData,
+  TokenMinuteData,
   UniswapDayData,
 } from './../types/schema'
 import { ONE_BI, ZERO_BD, ZERO_BI } from './constants'
@@ -122,12 +124,58 @@ export function updatePoolHourData(poolId: string, event: ethereum.Event): PoolH
   return poolHourData as PoolHourData
 }
 
+export function updatePoolMinuteData(poolId: string, event: ethereum.Event): PoolMinuteData {
+  const timestamp = event.block.timestamp.toI32()
+  const minuteIndex = timestamp / 60 // get unique minute within unix history
+  const minuteStartUnix = minuteIndex * 60 // want the rounded effect
+  const minutePoolID = poolId.concat('-').concat(minuteIndex.toString())
+  const pool = Pool.load(poolId)!
+  let poolMinuteData = PoolMinuteData.load(minutePoolID)
+  if (poolMinuteData === null) {
+    poolMinuteData = new PoolMinuteData(minutePoolID)
+    poolMinuteData.periodStartUnix = minuteStartUnix
+    poolMinuteData.pool = pool.id
+    poolMinuteData.volumeToken0 = ZERO_BD
+    poolMinuteData.volumeToken1 = ZERO_BD
+    poolMinuteData.volumeUSD = ZERO_BD
+    poolMinuteData.txCount = ZERO_BI
+    poolMinuteData.feesUSD = ZERO_BD
+    poolMinuteData.open = pool.token0Price
+    poolMinuteData.high = pool.token0Price
+    poolMinuteData.low = pool.token0Price
+    poolMinuteData.close = pool.token0Price
+  }
+
+  if (pool.token0Price.gt(poolMinuteData.high)) {
+    poolMinuteData.high = pool.token0Price
+  }
+
+  if (pool.token0Price.lt(poolMinuteData.low)) {
+    poolMinuteData.low = pool.token0Price
+  }
+
+  poolMinuteData.liquidity = pool.liquidity
+  poolMinuteData.sqrtPrice = pool.sqrtPrice
+  poolMinuteData.token0Price = pool.token0Price
+  poolMinuteData.token1Price = pool.token1Price
+  poolMinuteData.close = pool.token0Price
+  poolMinuteData.tick = pool.tick
+  poolMinuteData.tvlUSD = pool.totalValueLockedUSD
+  poolMinuteData.txCount = poolMinuteData.txCount.plus(ONE_BI)
+  poolMinuteData.save()
+
+  return poolMinuteData as PoolMinuteData
+}
+
 export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
   const bundle = Bundle.load('1')!
   const timestamp = event.block.timestamp.toI32()
   const dayID = timestamp / 86400
   const dayStartTimestamp = dayID * 86400
-  const tokenDayID = token.id.toString().concat('-').concat(dayID.toString())
+  const tokenDayID = token.id
+    .toString()
+    .concat('-')
+    .concat(dayID.toString())
   const tokenPrice = token.derivedETH.times(bundle.ethPriceUSD)
 
   let tokenDayData = TokenDayData.load(tokenDayID)
@@ -137,8 +185,8 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
     tokenDayData.token = token.id
     tokenDayData.volume = ZERO_BD
     tokenDayData.volumeUSD = ZERO_BD
-    tokenDayData.feesUSD = ZERO_BD
     tokenDayData.untrackedVolumeUSD = ZERO_BD
+    tokenDayData.feesUSD = ZERO_BD
     tokenDayData.open = tokenPrice
     tokenDayData.high = tokenPrice
     tokenDayData.low = tokenPrice
@@ -167,7 +215,10 @@ export function updateTokenHourData(token: Token, event: ethereum.Event): TokenH
   const timestamp = event.block.timestamp.toI32()
   const hourIndex = timestamp / 3600 // get unique hour within unix history
   const hourStartUnix = hourIndex * 3600 // want the rounded effect
-  const tokenHourID = token.id.toString().concat('-').concat(hourIndex.toString())
+  const tokenHourID = token.id
+    .toString()
+    .concat('-')
+    .concat(hourIndex.toString())
   let tokenHourData = TokenHourData.load(tokenHourID)
   const tokenPrice = token.derivedETH.times(bundle.ethPriceUSD)
 
@@ -200,4 +251,47 @@ export function updateTokenHourData(token: Token, event: ethereum.Event): TokenH
   tokenHourData.save()
 
   return tokenHourData as TokenHourData
+}
+
+export function updateTokenMinuteData(token: Token, event: ethereum.Event): TokenMinuteData {
+  const bundle = Bundle.load('1')!
+  const timestamp = event.block.timestamp.toI32()
+  const minuteIndex = timestamp / 60 // get unique minute within unix history
+  const minuteStartUnix = minuteIndex * 60 // want the rounded effect
+  const tokenMinuteID = token.id
+    .toString()
+    .concat('-')
+    .concat(minuteIndex.toString())
+  let tokenMinuteData = TokenMinuteData.load(tokenMinuteID)
+  const tokenPrice = token.derivedETH.times(bundle.ethPriceUSD)
+
+  if (tokenMinuteData === null) {
+    tokenMinuteData = new TokenMinuteData(tokenMinuteID)
+    tokenMinuteData.periodStartUnix = minuteStartUnix
+    tokenMinuteData.token = token.id
+    tokenMinuteData.volume = ZERO_BD
+    tokenMinuteData.volumeUSD = ZERO_BD
+    tokenMinuteData.untrackedVolumeUSD = ZERO_BD
+    tokenMinuteData.feesUSD = ZERO_BD
+    tokenMinuteData.open = tokenPrice
+    tokenMinuteData.high = tokenPrice
+    tokenMinuteData.low = tokenPrice
+    tokenMinuteData.close = tokenPrice
+  }
+
+  if (tokenPrice.gt(tokenMinuteData.high)) {
+    tokenMinuteData.high = tokenPrice
+  }
+
+  if (tokenPrice.lt(tokenMinuteData.low)) {
+    tokenMinuteData.low = tokenPrice
+  }
+
+  tokenMinuteData.close = tokenPrice
+  tokenMinuteData.priceUSD = tokenPrice
+  tokenMinuteData.totalValueLocked = token.totalValueLocked
+  tokenMinuteData.totalValueLockedUSD = token.totalValueLockedUSD
+  tokenMinuteData.save()
+
+  return tokenMinuteData as TokenMinuteData
 }

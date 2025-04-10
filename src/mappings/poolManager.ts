@@ -5,7 +5,7 @@ import { PoolManager } from '../types/schema'
 import { Bundle, Hook, Pool, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ADDRESS_ZERO, ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
-import { updatePoolDayData, updatePoolHourData } from '../utils/intervalUpdates'
+import { updatePoolDayData, updatePoolHourData, updatePoolMinuteData } from '../utils/intervalUpdates'
 import { findNativePerToken, getNativePriceInUSD, sqrtPriceX96ToTokenPrices } from '../utils/pricing'
 import { fetchTokenDecimals, fetchTokenName, fetchTokenSymbol, fetchTokenTotalSupply } from '../utils/token'
 
@@ -198,6 +198,7 @@ export function handleInitializeHelper(
   bundle.save()
   updatePoolDayData(poolId, event)
   updatePoolHourData(poolId, event)
+  updatePoolMinuteData(poolId, event)
   token1.derivedETH = findNativePerToken(token1, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
   token0.derivedETH = findNativePerToken(token0, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
 

@@ -8,8 +8,10 @@ import { convertTokenToDecimal, loadTransaction } from '../utils/index'
 import {
   updatePoolDayData,
   updatePoolHourData,
+  updatePoolMinuteData,
   updateTokenDayData,
   updateTokenHourData,
+  updateTokenMinuteData,
   updateUniswapDayData,
 } from '../utils/intervalUpdates'
 import { getAmount0, getAmount1 } from '../utils/liquidityMath/liquidityAmounts'
@@ -182,10 +184,13 @@ export function handleModifyLiquidityHelper(
     updateUniswapDayData(event, poolManagerAddress)
     updatePoolDayData(event.params.id.toHexString(), event)
     updatePoolHourData(event.params.id.toHexString(), event)
+    updatePoolMinuteData(event.params.id.toHexString(), event)
     updateTokenDayData(token0, event)
     updateTokenDayData(token1, event)
     updateTokenHourData(token0, event)
     updateTokenHourData(token1, event)
+    updateTokenMinuteData(token0, event)
+    updateTokenMinuteData(token1, event)
 
     token0.save()
     token1.save()
