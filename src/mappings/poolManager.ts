@@ -75,6 +75,9 @@ export function handleInitializeHelper(
   hook.totalValueLockedETH = ZERO_BD
   hook.tradingVolumeUSD = ZERO_BD
   hook.untrackedTradingVolumeUSD = ZERO_BD
+  hook.totalValueLockedETHUntracked = ZERO_BD
+  hook.totalValueLockedUSDUntracked = ZERO_BD
+  hook.uniqueUserCount = ZERO_BI
   hook.save()
 
   let token0 = Token.load(event.params.currency0.toHexString())

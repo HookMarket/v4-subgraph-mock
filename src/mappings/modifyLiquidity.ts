@@ -1,7 +1,7 @@
 import { BigInt, log } from '@graphprotocol/graph-ts'
 
 import { ModifyLiquidity as ModifyLiquidityEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, ModifyLiquidity, Pool, PoolManager, PoolUser, Tick, Token } from '../types/schema'
+import { Bundle, Hook, HookUser, ModifyLiquidity, Pool, PoolManager, PoolUser, Tick, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
@@ -28,8 +28,9 @@ export function handleModifyLiquidityHelper(
 
   const bundle = Bundle.load('1')!
   const poolId = event.params.id.toHexString()
-  const pool = Pool.load(poolId)
+  const pool = Pool.load(poolId)!
   const poolManager = PoolManager.load(poolManagerAddress)
+  const hook = Hook.load(pool.hooks)!
 
   if (pool === null) {
     log.debug('handleModifyLiquidityHelper: pool not found {}', [poolId])
@@ -49,6 +50,15 @@ export function handleModifyLiquidityHelper(
     poolUser.user = event.params.sender
     poolUser.firstInteractionTimestamp = event.block.timestamp
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
+  }
+
+  let hookUser = HookUser.load(hook.id + '-' + event.params.sender.toHexString())
+  if (!hookUser) {
+    hookUser = new HookUser(hook.id + '-' + event.params.sender.toHexString())
+    hookUser.hook = hook.id
+    hookUser.user = event.params.sender
+    hookUser.firstInteractionTimestamp = event.block.timestamp
+    hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
   }
 
   const token0 = Token.load(pool.token0)
@@ -80,6 +90,7 @@ export function handleModifyLiquidityHelper(
 
     // reset tvl aggregates until new amounts calculated
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.minus(pool.totalValueLockedETH)
+    hook.totalValueLockedETH = hook.totalValueLockedETH.minus(pool.totalValueLockedETH)
 
     // update globals
     poolManager.txCount = poolManager.txCount.plus(ONE_BI)
@@ -117,6 +128,9 @@ export function handleModifyLiquidityHelper(
     // reset aggregates with new amounts
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)
     poolManager.totalValueLockedUSD = poolManager.totalValueLockedETH.times(bundle.ethPriceUSD)
+
+    hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
+    hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
 
     const transaction = loadTransaction(event)
     const modifyLiquidity = new ModifyLiquidity(transaction.id.toString() + '-' + event.logIndex.toString())
@@ -178,5 +192,8 @@ export function handleModifyLiquidityHelper(
     pool.save()
     poolManager.save()
     modifyLiquidity.save()
+    hook.save()
+    hookUser.save()
+    poolUser.save()
   }
 }

@@ -529,4 +529,21 @@ type Hook @entity {
   tradingVolumeUSD: BigDecimal!
   # untracked trading volume in USD for all pools using this Hook
   untrackedTradingVolumeUSD: BigDecimal!
+  # total value locked in ETH for all pools using this hook
+  totalValueLockedETHUntracked: BigDecimal!
+  # total value locked in USD for all pools using this hook
+  totalValueLockedUSDUntracked: BigDecimal!
+  # total number of unique users who have interacted with all pools using this hook
+  uniqueUserCount: BigInt!
+}
+
+type HookUser @entity {
+  # hook address
+  id: ID!
+  # hook address
+  hook: Hook!
+  # user address
+  user: Bytes!
+  # first interaction timestamp
+  firstInteractionTimestamp: BigInt!
 }
