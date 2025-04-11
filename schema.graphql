@@ -581,6 +581,8 @@ type Transfer @entity {
 type Hook @entity {
   # hook address
   id: ID!
+  # hook hash(address)
+  hash: String!
   # number of pools using this hook
   poolCount: BigInt!
   # list of pools using this hook
@@ -618,4 +620,25 @@ type HookUser @entity {
   user: Bytes!
   # first interaction timestamp
   firstInteractionTimestamp: BigInt!
+}
+
+type Stats @entity {
+  # stats id
+  id: ID!
+  # total hook count
+  totalHookCount: BigInt!
+  # total hook fees in USD
+  totalHookFeesUSD: BigDecimal!
+  # total hook volume in USD
+  totalHookVolumeUSD: BigDecimal!
+  # total hook unique user count
+  totalHookUniqueUserCount: BigInt!
+  # total hook trading volume in USD
+  totalHookTradingVolumeUSD: BigDecimal!
+  # total hook untracked trading volume in USD
+  totalHookUntrackedTradingVolumeUSD: BigDecimal!
+  # total hook value locked in ETH
+  totalHookValueLockedETH: BigDecimal!
+  # total hook value locked in USD
+  totalHookValueLockedUSD: BigDecimal!
 }

@@ -1,7 +1,7 @@
 import { BigInt, log } from '@graphprotocol/graph-ts'
 
 import { Initialize as InitializeEvent } from '../types/PoolManager/PoolManager'
-import { PoolManager } from '../types/schema'
+import { PoolManager, Stats } from '../types/schema'
 import { Bundle, Hook, Pool, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ADDRESS_ZERO, ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
@@ -66,8 +66,24 @@ export function handleInitializeHelper(
     hook.poolCount = ZERO_BI
     hook.createdAtTimestamp = event.block.timestamp
     hook.createdAtBlockNumber = event.block.number
+
+    let stats = Stats.load('stats')
+    if (stats === null) {
+      stats = new Stats('stats')
+      stats.totalHookCount = ZERO_BI
+      stats.totalHookFeesUSD = ZERO_BD
+      stats.totalHookVolumeUSD = ZERO_BD
+      stats.totalHookUniqueUserCount = ZERO_BI
+      stats.totalHookTradingVolumeUSD = ZERO_BD
+      stats.totalHookUntrackedTradingVolumeUSD = ZERO_BD
+      stats.totalHookValueLockedETH = ZERO_BD
+      stats.totalHookValueLockedUSD = ZERO_BD
+    }
+    stats.totalHookCount = stats.totalHookCount.plus(ONE_BI)
+    stats.save()
   }
 
+  hook.hash = event.params.hooks.toHexString()
   hook.poolCount = hook.poolCount.plus(ONE_BI)
   hook.volumeUSD = ZERO_BD
   hook.feesUSD = ZERO_BD

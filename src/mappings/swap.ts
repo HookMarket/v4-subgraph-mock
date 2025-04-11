@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, Hook, HookUser, Pool, PoolManager, PoolUser, Swap, Token } from '../types/schema'
+import { Bundle, Hook, HookUser, Pool, PoolManager, PoolUser, Stats, Swap, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI, ZERO_BD } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils/index'
@@ -40,6 +40,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
   const hook = Hook.load(pool.hooks)!
+  const stats = Stats.load('stats')!
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
   if (!poolUser) {
@@ -57,6 +58,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     hookUser.user = event.params.sender
     hookUser.firstInteractionTimestamp = event.block.timestamp
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
+    stats.totalHookUniqueUserCount = stats.totalHookUniqueUserCount.plus(ONE_BI)
   }
 
   const token0 = Token.load(pool.token0)
@@ -119,6 +121,12 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     hook.tradingVolumeUSD = hook.tradingVolumeUSD.plus(amountTotalUSDTracked)
     hook.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD.plus(amountTotalUSDUntracked)
 
+    // stats
+    stats.totalHookVolumeUSD = stats.totalHookVolumeUSD.plus(amountTotalUSDTracked)
+    stats.totalHookFeesUSD = stats.totalHookFeesUSD.plus(feesUSD)
+    stats.totalHookTradingVolumeUSD = stats.totalHookTradingVolumeUSD.plus(amountTotalUSDTracked)
+    stats.totalHookUntrackedTradingVolumeUSD = stats.totalHookUntrackedTradingVolumeUSD.plus(amountTotalUSDUntracked)
+
     // Update the pool with the new active liquidity, price, and tick.
     pool.liquidity = event.params.liquidity
     pool.tick = BigInt.fromI32(event.params.tick as i32)
@@ -155,6 +163,9 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     token0.derivedETH = findNativePerToken(token0, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
     token1.derivedETH = findNativePerToken(token1, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
 
+    hook.totalValueLockedETH = hook.totalValueLockedETH.minus(pool.totalValueLockedETH)
+
+    stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.minus(pool.totalValueLockedETH)
     /**
      * Things afffected by new USD rates
      */
@@ -169,6 +180,9 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     // hook total value locked
     hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
     hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
+
+    stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.plus(pool.totalValueLockedETH)
+    stats.totalHookValueLockedUSD = stats.totalHookValueLockedETH.times(bundle.ethPriceUSD)
 
     token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedETH).times(bundle.ethPriceUSD)
     token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedETH).times(bundle.ethPriceUSD)
