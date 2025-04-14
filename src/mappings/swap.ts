@@ -1,4 +1,5 @@
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { log } from '@graphprotocol/graph-ts'
 
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
 import { Bundle, Hook, HookUser, Pool, PoolManager, PoolUser, Stats, Swap, Token } from '../types/schema'
@@ -51,9 +52,9 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
   }
 
-  let hookUser = HookUser.load(hook.id + '-' + event.params.sender.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
     hookUser.hook = hook.id
     hookUser.user = event.params.sender
     hookUser.firstInteractionTimestamp = event.block.timestamp
@@ -163,9 +164,22 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     token0.derivedETH = findNativePerToken(token0, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
     token1.derivedETH = findNativePerToken(token1, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
 
+    const txHash = 'tx: ' + event.transaction.hash.toHexString().slice(0, 8)
+    log.debug('vikkko {} - pool.id: {}', [txHash, pool.id])
+    log.debug('vikkko {} - hook.id: {}', [txHash, hook.id])
+    log.debug('vikkko {} - hook.totalValueLockedETH 0: {}', [txHash, hook.totalValueLockedETH.toString()])
+    log.debug('vikkko {} - pool.totalValueLockedETH 0: {}', [txHash, pool.totalValueLockedETH.toString()])
     hook.totalValueLockedETH = hook.totalValueLockedETH.minus(pool.totalValueLockedETH)
 
+    log.debug('vikkko {} - hook.totalValueLockedETH 1: {}', [txHash, hook.totalValueLockedETH.toString()])
+    log.debug('vikkko {} - stats.totalHookValueLockedETH 0: {}', [txHash, stats.totalHookValueLockedETH.toString()])
     stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.minus(pool.totalValueLockedETH)
+    log.debug('vikkko {} - stats.totalHookValueLockedETH 1: {}', [txHash, stats.totalHookValueLockedETH.toString()])
+
+    if (hook.totalValueLockedETH.lt(ZERO_BD) || stats.totalHookValueLockedETH.lt(ZERO_BD)) {
+      log.error('vikkko swap {} - hook.totalValueLockedETH: {}', [txHash, hook.totalValueLockedETH.toString()])
+    }
+
     /**
      * Things afffected by new USD rates
      */
@@ -177,11 +191,14 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)
     poolManager.totalValueLockedUSD = poolManager.totalValueLockedETH.times(bundle.ethPriceUSD)
 
+    log.debug('vikkko {} - pool.totalValueLockedETH 1: {}', [txHash, pool.totalValueLockedETH.toString()])
     // hook total value locked
     hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
+    log.debug('vikkko {} - hook.totalValueLockedETH 2: {}', [txHash, hook.totalValueLockedETH.toString()])
     hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
 
     stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.plus(pool.totalValueLockedETH)
+    log.debug('vikkko {} - stats.totalHookValueLockedETH 2: {}', [txHash, stats.totalHookValueLockedETH.toString()])
     stats.totalHookValueLockedUSD = stats.totalHookValueLockedETH.times(bundle.ethPriceUSD)
 
     token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedETH).times(bundle.ethPriceUSD)

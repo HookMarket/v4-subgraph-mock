@@ -1,4 +1,5 @@
 import { BigInt, log } from '@graphprotocol/graph-ts'
+import { log } from '@graphprotocol/graph-ts'
 
 import { ModifyLiquidity as ModifyLiquidityEvent } from '../types/PoolManager/PoolManager'
 import {
@@ -14,7 +15,7 @@ import {
   Token,
 } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
-import { ONE_BI } from '../utils/constants'
+import { ONE_BI, ZERO_BD } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
 import {
   updatePoolDayData,
@@ -43,7 +44,12 @@ export function handleModifyLiquidityHelper(
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
   const poolManager = PoolManager.load(poolManagerAddress)
+  log.debug('vikkko modifyLiquidityHelper {} - pool.hooks: {}', [poolId, pool.hooks])
   const hook = Hook.load(pool.hooks)!
+  log.debug('vikkko modifyLiquidityHelper {} - hook.createdAtTimestamp: {}', [
+    poolId,
+    hook.createdAtTimestamp.toString(),
+  ])
   const stats = Stats.load('stats')!
 
   if (pool === null) {
@@ -64,16 +70,16 @@ export function handleModifyLiquidityHelper(
     poolUser.user = event.params.sender
     poolUser.firstInteractionTimestamp = event.block.timestamp
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
-    stats.totalHookUniqueUserCount = stats.totalHookUniqueUserCount.plus(ONE_BI)
   }
 
-  let hookUser = HookUser.load(hook.id + '-' + event.params.sender.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
     hookUser.hook = hook.id
     hookUser.user = event.params.sender
     hookUser.firstInteractionTimestamp = event.block.timestamp
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
+    stats.totalHookUniqueUserCount = stats.totalHookUniqueUserCount.plus(ONE_BI)
   }
 
   const token0 = Token.load(pool.token0)
@@ -104,9 +110,42 @@ export function handleModifyLiquidityHelper(
     const amountUSD = calculateAmountUSD(amount0, amount1, token0.derivedETH, token1.derivedETH, bundle.ethPriceUSD)
 
     // reset tvl aggregates until new amounts calculated
+
+    const txHash = 'tx: ' + event.transaction.hash.toHexString().slice(0, 8)
+    log.debug('vikkko modifyLiquidity {} - pool.id: {}', [txHash, pool.id])
+    log.debug('vikkko modifyLiquidity {} - hook.id: {}', [txHash, hook.id])
+    log.debug('vikkko modifyLiquidity {} - hook.totalValueLockedETH 0: {}', [
+      txHash,
+      hook.totalValueLockedETH.toString(),
+    ])
+    log.debug('vikkko modifyLiquidity {} - pool.totalValueLockedETH 0: {}', [
+      txHash,
+      pool.totalValueLockedETH.toString(),
+    ])
+
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.minus(pool.totalValueLockedETH)
     hook.totalValueLockedETH = hook.totalValueLockedETH.minus(pool.totalValueLockedETH)
+
+    log.debug('vikkko modifyLiquidity {} - hook.totalValueLockedETH 1: {}', [
+      txHash,
+      hook.totalValueLockedETH.toString(),
+    ])
+    log.debug('vikkko modifyLiquidity {} - stats.totalHookValueLockedETH 0: {}', [
+      txHash,
+      stats.totalHookValueLockedETH.toString(),
+    ])
     stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.minus(pool.totalValueLockedETH)
+    log.debug('vikkko modifyLiquidity {} - stats.totalHookValueLockedETH 1: {}', [
+      txHash,
+      stats.totalHookValueLockedETH.toString(),
+    ])
+
+    if (hook.totalValueLockedETH.lt(ZERO_BD) || stats.totalHookValueLockedETH.lt(ZERO_BD)) {
+      log.error('vikkko modifyLiquidity {} - hook.totalValueLockedETH: {}', [
+        txHash,
+        hook.totalValueLockedETH.toString(),
+      ])
+    }
 
     // update globals
     poolManager.txCount = poolManager.txCount.plus(ONE_BI)
@@ -145,10 +184,22 @@ export function handleModifyLiquidityHelper(
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)
     poolManager.totalValueLockedUSD = poolManager.totalValueLockedETH.times(bundle.ethPriceUSD)
 
+    log.debug('vikkko modifyLiquidity {} - pool.totalValueLockedETH 1: {}', [
+      txHash,
+      pool.totalValueLockedETH.toString(),
+    ])
     hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
+    log.debug('vikkko modifyLiquidity {} - hook.totalValueLockedETH 2: {}', [
+      txHash,
+      hook.totalValueLockedETH.toString(),
+    ])
     hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
 
     stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.plus(pool.totalValueLockedETH)
+    log.debug('vikkko modifyLiquidity {} - stats.totalHookValueLockedETH 2: {}', [
+      txHash,
+      stats.totalHookValueLockedETH.toString(),
+    ])
     stats.totalHookValueLockedUSD = stats.totalHookValueLockedETH.times(bundle.ethPriceUSD)
 
     const transaction = loadTransaction(event)

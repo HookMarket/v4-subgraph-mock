@@ -61,13 +61,22 @@ export function handleInitializeHelper(
   poolManager.poolCount = poolManager.poolCount.plus(ONE_BI)
   const pool = new Pool(poolId)
   let hook = Hook.load(event.params.hooks.toHexString())
+  let stats = Stats.load('stats')
   if (hook === null) {
     hook = new Hook(event.params.hooks.toHexString())
     hook.poolCount = ZERO_BI
     hook.createdAtTimestamp = event.block.timestamp
     hook.createdAtBlockNumber = event.block.number
+    hook.volumeUSD = ZERO_BD
+    hook.feesUSD = ZERO_BD
+    hook.totalValueLockedUSD = ZERO_BD
+    hook.totalValueLockedETH = ZERO_BD
+    hook.tradingVolumeUSD = ZERO_BD
+    hook.untrackedTradingVolumeUSD = ZERO_BD
+    hook.totalValueLockedETHUntracked = ZERO_BD
+    hook.totalValueLockedUSDUntracked = ZERO_BD
+    hook.uniqueUserCount = ZERO_BI
 
-    let stats = Stats.load('stats')
     if (stats === null) {
       stats = new Stats('stats')
       stats.totalHookCount = ZERO_BI
@@ -85,15 +94,7 @@ export function handleInitializeHelper(
 
   hook.hash = event.params.hooks.toHexString()
   hook.poolCount = hook.poolCount.plus(ONE_BI)
-  hook.volumeUSD = ZERO_BD
-  hook.feesUSD = ZERO_BD
-  hook.totalValueLockedUSD = ZERO_BD
-  hook.totalValueLockedETH = ZERO_BD
-  hook.tradingVolumeUSD = ZERO_BD
-  hook.untrackedTradingVolumeUSD = ZERO_BD
-  hook.totalValueLockedETHUntracked = ZERO_BD
-  hook.totalValueLockedUSDUntracked = ZERO_BD
-  hook.uniqueUserCount = ZERO_BI
+
   hook.save()
 
   let token0 = Token.load(event.params.currency0.toHexString())
