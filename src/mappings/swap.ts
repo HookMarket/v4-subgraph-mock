@@ -164,20 +164,22 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     token0.derivedETH = findNativePerToken(token0, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
     token1.derivedETH = findNativePerToken(token1, wrappedNativeAddress, stablecoinAddresses, minimumNativeLocked)
 
-    const txHash = 'tx: ' + event.transaction.hash.toHexString().slice(0, 8)
-    log.debug('vikkko {} - pool.id: {}', [txHash, pool.id])
-    log.debug('vikkko {} - hook.id: {}', [txHash, hook.id])
-    log.debug('vikkko {} - hook.totalValueLockedETH 0: {}', [txHash, hook.totalValueLockedETH.toString()])
-    log.debug('vikkko {} - pool.totalValueLockedETH 0: {}', [txHash, pool.totalValueLockedETH.toString()])
-    hook.totalValueLockedETH = hook.totalValueLockedETH.minus(pool.totalValueLockedETH)
+    if (hook.totalValueLockedETH.gt(stats.totalHookValueLockedETH)) {
+      log.error('vikkko swap 0 - hook.totalValueLockedETH: {}', [hook.totalValueLockedETH.toString()])
+      log.error('vikkko swap 0 - stats.totalHookValueLockedETH: {}', [stats.totalHookValueLockedETH.toString()])
+      log.error('vikkko swap 0 - pool.totalValueLockedETH: {}', [pool.totalValueLockedETH.toString()])
+      log.error('vikkko swap 0 - currentPoolTvlETH: {}', [currentPoolTvlETH.toString()])
+    }
 
-    log.debug('vikkko {} - hook.totalValueLockedETH 1: {}', [txHash, hook.totalValueLockedETH.toString()])
-    log.debug('vikkko {} - stats.totalHookValueLockedETH 0: {}', [txHash, stats.totalHookValueLockedETH.toString()])
-    stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.minus(pool.totalValueLockedETH)
-    log.debug('vikkko {} - stats.totalHookValueLockedETH 1: {}', [txHash, stats.totalHookValueLockedETH.toString()])
+    hook.totalValueLockedETH = hook.totalValueLockedETH.minus(currentPoolTvlETH)
+
+    stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.minus(currentPoolTvlETH)
 
     if (hook.totalValueLockedETH.lt(ZERO_BD) || stats.totalHookValueLockedETH.lt(ZERO_BD)) {
-      log.error('vikkko swap {} - hook.totalValueLockedETH: {}', [txHash, hook.totalValueLockedETH.toString()])
+      log.error('vikkko swap 1 - hook.totalValueLockedETH: {}', [hook.totalValueLockedETH.toString()])
+      log.error('vikkko swap 1 - stats.totalHookValueLockedETH: {}', [stats.totalHookValueLockedETH.toString()])
+      log.error('vikkko swap 1 - pool.totalValueLockedETH: {}', [pool.totalValueLockedETH.toString()])
+      log.error('vikkko swap 1 - currentPoolTvlETH: {}', [currentPoolTvlETH.toString()])
     }
 
     /**
@@ -191,14 +193,11 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)
     poolManager.totalValueLockedUSD = poolManager.totalValueLockedETH.times(bundle.ethPriceUSD)
 
-    log.debug('vikkko {} - pool.totalValueLockedETH 1: {}', [txHash, pool.totalValueLockedETH.toString()])
     // hook total value locked
     hook.totalValueLockedETH = hook.totalValueLockedETH.plus(pool.totalValueLockedETH)
-    log.debug('vikkko {} - hook.totalValueLockedETH 2: {}', [txHash, hook.totalValueLockedETH.toString()])
     hook.totalValueLockedUSD = hook.totalValueLockedETH.times(bundle.ethPriceUSD)
 
     stats.totalHookValueLockedETH = stats.totalHookValueLockedETH.plus(pool.totalValueLockedETH)
-    log.debug('vikkko {} - stats.totalHookValueLockedETH 2: {}', [txHash, stats.totalHookValueLockedETH.toString()])
     stats.totalHookValueLockedUSD = stats.totalHookValueLockedETH.times(bundle.ethPriceUSD)
 
     token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedETH).times(bundle.ethPriceUSD)
@@ -299,6 +298,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     token0.save()
     token1.save()
     hook.save()
+    stats.save()
     hookUser.save()
     poolUser.save()
   }
