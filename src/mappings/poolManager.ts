@@ -76,7 +76,7 @@ export function handleInitializeHelper(
     hook.totalValueLockedETHUntracked = ZERO_BD
     hook.totalValueLockedUSDUntracked = ZERO_BD
     hook.uniqueUserCount = ZERO_BI
-
+    hook.uniqueLiquidityProviderCount = ZERO_BI
     if (stats === null) {
       stats = new Stats('stats')
       stats.totalHookCount = ZERO_BI
@@ -195,7 +195,7 @@ export function handleInitializeHelper(
   pool.collectedFeesToken1 = ZERO_BD
   pool.collectedFeesUSD = ZERO_BD
   pool.uniqueUserCount = ZERO_BI
-
+  pool.uniqueLiquidityProviderCount = ZERO_BI
   pool.sqrtPrice = event.params.sqrtPriceX96
   pool.tick = BigInt.fromI32(event.params.tick)
 
