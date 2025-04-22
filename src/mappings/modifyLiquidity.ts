@@ -15,7 +15,7 @@ import {
   Token,
 } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
-import { ONE_BI, ZERO_BD } from '../utils/constants'
+import { ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
 import {
   updatePoolDayData,
@@ -50,7 +50,8 @@ export function handleModifyLiquidityHelper(
     poolId,
     hook.createdAtTimestamp.toString(),
   ])
-  const stats = Stats.load('stats')!
+  const stats =
+    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('zero_stats')! : Stats.load('stats')!
 
   if (pool === null) {
     log.debug('handleModifyLiquidityHelper: pool not found {}', [poolId])
@@ -64,22 +65,34 @@ export function handleModifyLiquidityHelper(
 
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + event.params.sender.toHexString())
+
   if (!poolUser) {
     poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
     poolUser.pool = pool.id
     poolUser.user = event.params.sender
     poolUser.firstInteractionTimestamp = event.block.timestamp
+    poolUser.totalValueLockedToken0 = ZERO_BD
+    poolUser.totalValueLockedToken1 = ZERO_BD
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
   }
 
-  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + event.params.sender.toHexString())
     hookUser.hook = hook.id
     hookUser.user = event.params.sender
+    hookUser.uniqueUserPoolCount = ZERO_BI
     hookUser.firstInteractionTimestamp = event.block.timestamp
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
     stats.totalHookUniqueUserCount = stats.totalHookUniqueUserCount.plus(ONE_BI)
+  }
+
+  if (poolUser.totalValueLockedToken0.equals(ZERO_BD) && poolUser.totalValueLockedToken1.equals(ZERO_BD)) {
+    pool.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount.plus(ONE_BI)
+    if (hookUser.uniqueUserPoolCount.equals(ZERO_BI)) {
+      hook.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount.plus(ONE_BI)
+    }
+    hookUser.uniqueUserPoolCount = hookUser.uniqueUserPoolCount.plus(ONE_BI)
   }
 
   const token0 = Token.load(pool.token0)
@@ -162,6 +175,16 @@ export function handleModifyLiquidityHelper(
       .times(token0.derivedETH)
       .plus(pool.totalValueLockedToken1.times(token1.derivedETH))
     pool.totalValueLockedUSD = pool.totalValueLockedETH.times(bundle.ethPriceUSD)
+
+    poolUser.totalValueLockedToken0 = poolUser.totalValueLockedToken0.plus(amount0)
+    poolUser.totalValueLockedToken1 = poolUser.totalValueLockedToken1.plus(amount1)
+    if (poolUser.totalValueLockedToken0.le(ZERO_BD) && poolUser.totalValueLockedToken1.le(ZERO_BD)) {
+      pool.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount.minus(ONE_BI)
+      hookUser.uniqueUserPoolCount = hookUser.uniqueUserPoolCount.minus(ONE_BI)
+      if (hookUser.uniqueUserPoolCount.le(ZERO_BI)) {
+        hook.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount.minus(ONE_BI)
+      }
+    }
 
     // reset aggregates with new amounts
     poolManager.totalValueLockedETH = poolManager.totalValueLockedETH.plus(pool.totalValueLockedETH)

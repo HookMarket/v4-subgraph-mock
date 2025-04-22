@@ -82,6 +82,10 @@ type PoolUser @entity {
   user: Bytes!
   # first interaction timestamp
   firstInteractionTimestamp: BigInt!
+  # total token0 value locked
+  totalValueLockedToken0: BigDecimal!
+  # total token1 value locked
+  totalValueLockedToken1: BigDecimal!
 }
 
 type Pool @entity {
@@ -145,6 +149,8 @@ type Pool @entity {
   poolUsers: [PoolUser!]! @derivedFrom(field: "pool")
   # total number of unique users who have interacted with this pool
   uniqueUserCount: BigInt!
+  # total number of unique users who have liquidity in this pool
+  uniqueLiquidityProviderCount: BigInt!
   # hourly snapshots of pool data
   poolHourData: [PoolHourData!]! @derivedFrom(field: "pool")
   # daily snapshots of pool data
@@ -609,6 +615,8 @@ type Hook @entity {
   totalValueLockedUSDUntracked: BigDecimal!
   # total number of unique users who have interacted with all pools using this hook
   uniqueUserCount: BigInt!
+  # total number of unique users who have provided liquidity in all pools using this hook
+  uniqueLiquidityProviderCount: BigInt!
 }
 
 type HookUser @entity {
@@ -620,6 +628,8 @@ type HookUser @entity {
   user: Bytes!
   # first interaction timestamp
   firstInteractionTimestamp: BigInt!
+  # the number of pools for which the user uses this hook and provides liquidity
+  uniqueUserPoolCount: BigInt!
 }
 
 type Stats @entity {

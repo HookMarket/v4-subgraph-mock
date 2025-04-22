@@ -4,7 +4,7 @@ import { log } from '@graphprotocol/graph-ts'
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
 import { Bundle, Hook, HookUser, Pool, PoolManager, PoolUser, Stats, Swap, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
-import { ONE_BI, ZERO_BD } from '../utils/constants'
+import { ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils/index'
 import {
   updatePoolDayData,
@@ -41,13 +41,16 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
   const hook = Hook.load(pool.hooks)!
-  const stats = Stats.load('stats')!
+  const stats =
+    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('zero_stats')! : Stats.load('stats')!
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
   if (!poolUser) {
     poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
     poolUser.pool = pool.id
     poolUser.user = event.params.sender
+    poolUser.totalValueLockedToken0 = ZERO_BD
+    poolUser.totalValueLockedToken1 = ZERO_BD
     poolUser.firstInteractionTimestamp = event.block.timestamp
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
   }
@@ -58,6 +61,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     hookUser.hook = hook.id
     hookUser.user = event.params.sender
     hookUser.firstInteractionTimestamp = event.block.timestamp
+    hookUser.uniqueUserPoolCount = ZERO_BI
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
     stats.totalHookUniqueUserCount = stats.totalHookUniqueUserCount.plus(ONE_BI)
   }
