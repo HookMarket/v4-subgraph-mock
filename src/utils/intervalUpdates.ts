@@ -308,7 +308,7 @@ export function updateStatsDayData(stats: Stats | null, event: ethereum.Event): 
   const timestamp = event.block.timestamp.toI32()
   const dayID = timestamp / 86400
   const dayStartTimestamp = dayID * 86400
-  const statsDayID = 'stats'
+  const statsDayID = 'stats' + dayID.toString()
   let statsDayData = StatsDayData.load(statsDayID)
   if (statsDayData === null) {
     statsDayData = new StatsDayData(statsDayID)
@@ -343,7 +343,7 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   const timestamp = event.block.timestamp.toI32()
   const dayID = timestamp / 86400
   const dayStartTimestamp = dayID * 86400
-  const hookDayID = hook.id
+  const hookDayID = hook.id + '-' + dayID.toString()
   let hookDayData = HookDayData.load(hookDayID)
   if (hookDayData === null) {
     hookDayData = new HookDayData(hookDayID)
