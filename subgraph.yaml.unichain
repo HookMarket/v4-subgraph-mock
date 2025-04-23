@@ -9,7 +9,7 @@ features:
 dataSources:
   - kind: ethereum/contract
     name: PoolManager
-    network: unichain-mainnet
+    network: unichain
     source:
       abi: PoolManager
       address: "0x1f98400000000000000000000000000000000004"
@@ -43,7 +43,7 @@ dataSources:
           handler: handleSwap
   - kind: ethereum/contract
     name: PositionManager
-    network: unichain-mainnet
+    network: unichain
     source:
       abi: PositionManager
       address: "0x4529a01c7a0410167c5740c487a8de60232617bf"
