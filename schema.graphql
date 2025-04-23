@@ -143,8 +143,6 @@ type Pool @entity {
   totalValueLockedUSD: BigDecimal!
   # TVL derived in USD untracked
   totalValueLockedUSDUntracked: BigDecimal!
-  # Fields used to help derived relationship
-  liquidityProviderCount: BigInt! # used to detect new exchanges
   # users who have interacted with this pool
   poolUsers: [PoolUser!]! @derivedFrom(field: "pool")
   # total number of unique users who have interacted with this pool
@@ -332,6 +330,11 @@ type PoolDayData @entity {
   low: BigDecimal!
   # close price of token0
   close: BigDecimal!
+  # total number of unique users who have interacted with this pool
+  uniqueUserCount: BigInt!
+  # total number of unique users who have liquidity in this pool
+  uniqueLiquidityProviderCount: BigInt!
+  
 }
 
 # hourly stats tracker for pool
@@ -651,4 +654,61 @@ type Stats @entity {
   totalHookValueLockedETH: BigDecimal!
   # total hook value locked in USD
   totalHookValueLockedUSD: BigDecimal!
+  # day data
+  statsdayData: [StatsDayData!]! @derivedFrom(field: "stats")
+}
+
+type StatsDayData @entity {
+  id: ID!
+  # timestamp rounded to current day by dividing by 86400
+  date: Int!
+  # pointer to stats
+  stats: Stats!
+  # total hook count
+  totalHookCount: BigInt!
+  # total hook fees in USD
+  totalHookFeesUSD: BigDecimal!
+  # total hook volume in USD
+  totalHookVolumeUSD: BigDecimal!
+  # total hook unique user count
+  totalHookUniqueUserCount: BigInt!
+  # total hook trading volume in USD
+  totalHookTradingVolumeUSD: BigDecimal!
+  # total hook untracked trading volume in USD
+  totalHookUntrackedTradingVolumeUSD: BigDecimal!
+  # total hook value locked in ETH
+  totalHookValueLockedETH: BigDecimal!
+  # total hook value locked in USD
+  totalHookValueLockedUSD: BigDecimal!
+}
+
+type HookDayData @entity {
+  # hook address
+  id: ID!
+  # timestamp rounded to current day by dividing by 86400
+  date: Int!
+  # hook address
+  hook: Hook!
+  # number of pools using this hook
+  poolCount: BigInt!
+  # total volume in USD for all pools using this hook
+  volumeUSD: BigDecimal!
+  # total fees in USD for all pools using this hook
+  feesUSD: BigDecimal!
+  # total value locked in ETH for all pools using this hook
+  totalValueLockedETH: BigDecimal!
+  # total value locked in USD for all pools using this hook
+  totalValueLockedUSD: BigDecimal!
+  # trading volume in USD for all pools using this hook
+  tradingVolumeUSD: BigDecimal!
+  # untracked trading volume in USD for all pools using this Hook
+  untrackedTradingVolumeUSD: BigDecimal!
+  # total value locked in ETH for all pools using this hook
+  totalValueLockedETHUntracked: BigDecimal!
+  # total value locked in USD for all pools using this hook
+  totalValueLockedUSDUntracked: BigDecimal!
+  # total number of unique users who have interacted with all pools using this hook
+  uniqueUserCount: BigInt!
+  # total number of unique users who have provided liquidity in all pools using this hook
+  uniqueLiquidityProviderCount: BigInt!
 }

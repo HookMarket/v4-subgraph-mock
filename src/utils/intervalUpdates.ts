@@ -2,11 +2,15 @@ import { ethereum } from '@graphprotocol/graph-ts'
 
 import {
   Bundle,
+  Hook,
+  HookDayData,
   Pool,
   PoolDayData,
   PoolHourData,
   PoolManager,
   PoolMinuteData,
+  Stats,
+  StatsDayData,
   Token,
   TokenDayData,
   TokenHourData,
@@ -55,6 +59,8 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
     poolDayData.volumeUSD = ZERO_BD
     poolDayData.feesUSD = ZERO_BD
     poolDayData.txCount = ZERO_BI
+    poolDayData.uniqueUserCount = ZERO_BI
+    poolDayData.uniqueLiquidityProviderCount = ZERO_BI
     poolDayData.open = pool.token0Price
     poolDayData.high = pool.token0Price
     poolDayData.low = pool.token0Price
@@ -76,6 +82,8 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   poolDayData.tick = pool.tick
   poolDayData.tvlUSD = pool.totalValueLockedUSD
   poolDayData.txCount = poolDayData.txCount.plus(ONE_BI)
+  poolDayData.uniqueUserCount = pool.uniqueUserCount
+  poolDayData.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount
   poolDayData.save()
 
   return poolDayData as PoolDayData
@@ -294,4 +302,78 @@ export function updateTokenMinuteData(token: Token, event: ethereum.Event): Toke
   tokenMinuteData.save()
 
   return tokenMinuteData as TokenMinuteData
+}
+
+export function updateStatsDayData(stats: Stats | null, event: ethereum.Event): StatsDayData {
+  const timestamp = event.block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
+  const statsDayID = 'stats'
+  let statsDayData = StatsDayData.load(statsDayID)
+  if (statsDayData === null) {
+    statsDayData = new StatsDayData(statsDayID)
+    statsDayData.date = dayStartTimestamp
+    statsDayData.stats = stats ? stats.id : 'stats'
+    statsDayData.totalHookCount = ZERO_BI
+    statsDayData.totalHookFeesUSD = ZERO_BD
+    statsDayData.totalHookVolumeUSD = ZERO_BD
+    statsDayData.totalHookUniqueUserCount = ZERO_BI
+    statsDayData.totalHookTradingVolumeUSD = ZERO_BD
+    statsDayData.totalHookUntrackedTradingVolumeUSD = ZERO_BD
+    statsDayData.totalHookValueLockedETH = ZERO_BD
+    statsDayData.totalHookValueLockedUSD = ZERO_BD
+  }
+  if (stats === null) {
+    return statsDayData
+  }
+  statsDayData.totalHookCount = stats.totalHookCount
+  statsDayData.totalHookFeesUSD = stats.totalHookFeesUSD
+  statsDayData.totalHookVolumeUSD = stats.totalHookVolumeUSD
+  statsDayData.totalHookUniqueUserCount = stats.totalHookUniqueUserCount
+  statsDayData.totalHookTradingVolumeUSD = stats.totalHookTradingVolumeUSD
+  statsDayData.totalHookUntrackedTradingVolumeUSD = stats.totalHookUntrackedTradingVolumeUSD
+  statsDayData.totalHookValueLockedETH = stats.totalHookValueLockedETH
+  statsDayData.totalHookValueLockedUSD = stats.totalHookValueLockedUSD
+  statsDayData.save()
+
+  return statsDayData as StatsDayData
+}
+
+export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayData {
+  const timestamp = event.block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
+  const hookDayID = hook.id
+  let hookDayData = HookDayData.load(hookDayID)
+  if (hookDayData === null) {
+    hookDayData = new HookDayData(hookDayID)
+    hookDayData.date = dayStartTimestamp
+    hookDayData.hook = hook.id
+    hookDayData.poolCount = ZERO_BI
+    hookDayData.volumeUSD = ZERO_BD
+    hookDayData.feesUSD = ZERO_BD
+    hookDayData.totalValueLockedETH = ZERO_BD
+    hookDayData.totalValueLockedUSD = ZERO_BD
+    hookDayData.tradingVolumeUSD = ZERO_BD
+    hookDayData.untrackedTradingVolumeUSD = ZERO_BD
+    hookDayData.uniqueUserCount = ZERO_BI
+    hookDayData.uniqueLiquidityProviderCount = ZERO_BI
+    hookDayData.totalValueLockedETHUntracked = ZERO_BD
+    hookDayData.totalValueLockedUSDUntracked = ZERO_BD
+  }
+
+  hookDayData.poolCount = hook.poolCount
+  hookDayData.volumeUSD = hook.volumeUSD
+  hookDayData.feesUSD = hook.feesUSD
+  hookDayData.totalValueLockedETH = hook.totalValueLockedETH
+  hookDayData.totalValueLockedUSD = hook.totalValueLockedUSD
+  hookDayData.tradingVolumeUSD = hook.tradingVolumeUSD
+  hookDayData.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD
+  hookDayData.totalValueLockedETHUntracked = hook.totalValueLockedETHUntracked
+  hookDayData.totalValueLockedUSDUntracked = hook.totalValueLockedUSDUntracked
+  hookDayData.uniqueUserCount = hook.uniqueUserCount
+  hookDayData.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount
+
+  hookDayData.save()
+  return hookDayData as HookDayData
 }

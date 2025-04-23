@@ -18,9 +18,11 @@ import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
 import {
+  updateHookDayData,
   updatePoolDayData,
   updatePoolHourData,
   updatePoolMinuteData,
+  updateStatsDayData,
   updateTokenDayData,
   updateTokenHourData,
   updateTokenMinuteData,
@@ -51,7 +53,7 @@ export function handleModifyLiquidityHelper(
     hook.createdAtTimestamp.toString(),
   ])
   const stats =
-    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('zero_stats')! : Stats.load('stats')!
+    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
 
   if (pool === null) {
     log.debug('handleModifyLiquidityHelper: pool not found {}', [poolId])
@@ -243,6 +245,8 @@ export function handleModifyLiquidityHelper(
     lowerTick.save()
     upperTick.save()
 
+    updateHookDayData(hook, event)
+    updateStatsDayData(stats, event)
     updateUniswapDayData(event, poolManagerAddress)
     updatePoolDayData(event.params.id.toHexString(), event)
     updatePoolHourData(event.params.id.toHexString(), event)

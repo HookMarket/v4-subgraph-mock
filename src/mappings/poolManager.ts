@@ -5,7 +5,13 @@ import { PoolManager, Stats } from '../types/schema'
 import { Bundle, Hook, Pool, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ADDRESS_ZERO, ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
-import { updatePoolDayData, updatePoolHourData, updatePoolMinuteData } from '../utils/intervalUpdates'
+import {
+  updateHookDayData,
+  updatePoolDayData,
+  updatePoolHourData,
+  updatePoolMinuteData,
+  updateStatsDayData,
+} from '../utils/intervalUpdates'
 import { findNativePerToken, getNativePriceInUSD, sqrtPriceX96ToTokenPrices } from '../utils/pricing'
 import { fetchTokenDecimals, fetchTokenName, fetchTokenSymbol, fetchTokenTotalSupply } from '../utils/token'
 
@@ -60,10 +66,10 @@ export function handleInitializeHelper(
 
   poolManager.poolCount = poolManager.poolCount.plus(ONE_BI)
   const pool = new Pool(poolId)
-  let hook = Hook.load(event.params.hooks.toHexString())!
+  let hook = Hook.load(event.params.hooks.toHexString())
   let stats = Stats.load('stats')
-  let zero_stats = Stats.load('zero_stats')
-  if (hook === null && event.params.hooks.toHexString() !== '0x0000000000000000000000000000000000000000') {
+  let statszero = Stats.load('statszero')
+  if (hook === null) {
     hook = new Hook(event.params.hooks.toHexString())
     hook.poolCount = ZERO_BI
     hook.createdAtTimestamp = event.block.timestamp
@@ -89,36 +95,23 @@ export function handleInitializeHelper(
       stats.totalHookValueLockedETH = ZERO_BD
       stats.totalHookValueLockedUSD = ZERO_BD
     }
-    stats.totalHookCount = stats.totalHookCount.plus(ONE_BI)
-    stats.save()
-  } else if (hook === null && event.params.hooks.toHexString() === '0x0000000000000000000000000000000000000000') {
-    hook = new Hook(event.params.hooks.toHexString())
-    hook.poolCount = ZERO_BI
-    hook.createdAtTimestamp = event.block.timestamp
-    hook.createdAtBlockNumber = event.block.number
-    hook.volumeUSD = ZERO_BD
-    hook.feesUSD = ZERO_BD
-    hook.totalValueLockedUSD = ZERO_BD
-    hook.totalValueLockedETH = ZERO_BD
-    hook.tradingVolumeUSD = ZERO_BD
-    hook.untrackedTradingVolumeUSD = ZERO_BD
-    hook.totalValueLockedETHUntracked = ZERO_BD
-    hook.totalValueLockedUSDUntracked = ZERO_BD
-    hook.uniqueUserCount = ZERO_BI
-    hook.uniqueLiquidityProviderCount = ZERO_BI
-    if (zero_stats === null) {
-      zero_stats = new Stats('zero_stats')
-      zero_stats.totalHookCount = ZERO_BI
-      zero_stats.totalHookFeesUSD = ZERO_BD
-      zero_stats.totalHookVolumeUSD = ZERO_BD
-      zero_stats.totalHookUniqueUserCount = ZERO_BI
-      zero_stats.totalHookTradingVolumeUSD = ZERO_BD
-      zero_stats.totalHookUntrackedTradingVolumeUSD = ZERO_BD
-      zero_stats.totalHookValueLockedETH = ZERO_BD
-      zero_stats.totalHookValueLockedUSD = ZERO_BD
+    if (statszero === null) {
+      statszero = new Stats('statszero')
+      statszero.totalHookCount = ZERO_BI
+      statszero.totalHookFeesUSD = ZERO_BD
+      statszero.totalHookVolumeUSD = ZERO_BD
+      statszero.totalHookUniqueUserCount = ZERO_BI
+      statszero.totalHookTradingVolumeUSD = ZERO_BD
+      statszero.totalHookUntrackedTradingVolumeUSD = ZERO_BD
+      statszero.totalHookValueLockedETH = ZERO_BD
     }
-    zero_stats.totalHookCount = zero_stats.totalHookCount.plus(ONE_BI)
-    zero_stats.save()
+    if (event.params.hooks.toHexString() !== '0x0000000000000000000000000000000000000000') {
+      stats.totalHookCount = stats.totalHookCount.plus(ONE_BI)
+      stats.save()
+    } else {
+      statszero.totalHookCount = statszero.totalHookCount.plus(ONE_BI)
+      statszero.save()
+    }
   }
 
   hook.hash = event.params.hooks.toHexString()
@@ -201,7 +194,6 @@ export function handleInitializeHelper(
   pool.tickSpacing = BigInt.fromI32(event.params.tickSpacing)
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
-  pool.liquidityProviderCount = ZERO_BI
   pool.txCount = ZERO_BI
   pool.liquidity = ZERO_BI
   pool.sqrtPrice = ZERO_BI
@@ -249,4 +241,7 @@ export function handleInitializeHelper(
 
   token0.save()
   token1.save()
+
+  updateHookDayData(hook, event)
+  updateStatsDayData(stats, event)
 }

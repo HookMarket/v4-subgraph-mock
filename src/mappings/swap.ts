@@ -7,9 +7,11 @@ import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils/index'
 import {
+  updateHookDayData,
   updatePoolDayData,
   updatePoolHourData,
   updatePoolMinuteData,
+  updateStatsDayData,
   updateTokenDayData,
   updateTokenHourData,
   updateTokenMinuteData,
@@ -36,13 +38,15 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const whitelistTokens = subgraphConfig.whitelistTokens
   const nativeTokenDetails = subgraphConfig.nativeTokenDetails
 
+  log.debug('vikkko swap step {} ', ['0'])
   const bundle = Bundle.load('1')!
   const poolManager = PoolManager.load(poolManagerAddress)!
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)!
   const hook = Hook.load(pool.hooks)!
+  log.debug('vikkko swap {} - hook.id: {}', [poolId, hook.id])
   const stats =
-    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('zero_stats')! : Stats.load('stats')!
+    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
   if (!poolUser) {
@@ -285,6 +289,9 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
     token1MinuteData.volumeUSD = token1MinuteData.volumeUSD.plus(amountTotalUSDTracked)
     token1MinuteData.untrackedVolumeUSD = token1MinuteData.untrackedVolumeUSD.plus(amountTotalUSDTracked)
     token1MinuteData.feesUSD = token1MinuteData.feesUSD.plus(feesUSD)
+
+    updateHookDayData(hook, event)
+    updateStatsDayData(stats, event)
 
     swap.save()
     token0DayData.save()
