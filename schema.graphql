@@ -711,4 +711,18 @@ type HookDayData @entity {
   uniqueUserCount: BigInt!
   # total number of unique users who have provided liquidity in all pools using this hook
   uniqueLiquidityProviderCount: BigInt!
+  # Use the 24-hour increment of this hook
+  poolCountGrowth: BigInt!
+  # 24-hour increment of value locked in USD for all pools using this hook
+  totalValueLockedUSDGrowth: BigDecimal!
+  # 24-hour increment of trading volume in USD for all pools using this hook
+  tradingVolumeUSDGrowth: BigDecimal!
+  # 24-hour increment of untracked trading volume in USD for all pools using this hook
+  untrackedTradingVolumeUSDGrowth: BigDecimal!
+  # 24-hour increment totalValueLockedUSDUntracked
+  totalValueLockedUSDUntrackedGrowth: BigDecimal!
+  # 24-hour increment uniqueUserCount
+  uniqueUserCountGrowth: BigInt!
+  # 24-hour increment uniqueLiquidityProviderCount
+  uniqueLiquidityProviderCountGrowth:BigInt!
 }
