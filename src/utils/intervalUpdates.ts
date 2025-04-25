@@ -48,8 +48,10 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   const dayID = timestamp / 86400
   const dayStartTimestamp = dayID * 86400
   const dayPoolID = poolId.concat('-').concat(dayID.toString())
+  const lastStateID = poolId.concat('-0')
   const pool = Pool.load(poolId)!
   let poolDayData = PoolDayData.load(dayPoolID)
+  let lastState = PoolDayData.load(lastStateID)
   if (poolDayData === null) {
     poolDayData = new PoolDayData(dayPoolID)
     poolDayData.date = dayStartTimestamp
@@ -65,6 +67,12 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
     poolDayData.high = pool.token0Price
     poolDayData.low = pool.token0Price
     poolDayData.close = pool.token0Price
+    poolDayData.uniqueUserCountGrowth = ZERO_BI
+    poolDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
+    poolDayData.txCountGrowth = ZERO_BI
+    poolDayData.feesUSDGrowth = ZERO_BD
+    poolDayData.volumeUSDGrowth = ZERO_BD
+    poolDayData.tvlUSDGrowth = ZERO_BD
   }
 
   if (pool.token0Price.gt(poolDayData.high)) {
@@ -84,8 +92,56 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   poolDayData.txCount = poolDayData.txCount.plus(ONE_BI)
   poolDayData.uniqueUserCount = pool.uniqueUserCount
   poolDayData.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount
+
+  //Calculate growth
+  if (lastState !== null) {
+    poolDayData.uniqueUserCountGrowth = pool.uniqueUserCount.minus(lastState.uniqueUserCount)
+    poolDayData.uniqueLiquidityProviderCountGrowth = pool.uniqueLiquidityProviderCount.minus(
+      lastState.uniqueLiquidityProviderCount,
+    )
+    poolDayData.txCountGrowth = poolDayData.txCount.minus(lastState.txCount)
+    poolDayData.feesUSDGrowth = poolDayData.feesUSD.minus(lastState.feesUSD)
+    poolDayData.volumeUSDGrowth = poolDayData.volumeUSD.minus(lastState.volumeUSD)
+    poolDayData.tvlUSDGrowth = poolDayData.tvlUSD.minus(lastState.tvlUSD)
+  } else {
+    poolDayData.uniqueUserCountGrowth = ZERO_BI
+    poolDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
+    poolDayData.txCountGrowth = ZERO_BI
+    poolDayData.feesUSDGrowth = ZERO_BD
+    poolDayData.volumeUSDGrowth = ZERO_BD
+    poolDayData.tvlUSDGrowth = ZERO_BD
+  }
+
   poolDayData.save()
 
+  // Update the special status record (dayId = 0)
+  if (lastState === null) {
+    lastState = new PoolDayData(lastStateID)
+    lastState.date = 0
+    lastState.pool = pool.id
+    lastState.volumeToken0 = ZERO_BD
+    lastState.volumeToken1 = ZERO_BD
+    lastState.open = pool.token0Price
+    lastState.high = pool.token0Price
+    lastState.low = pool.token0Price
+    lastState.close = pool.token0Price
+  }
+
+  // Copy the current values to the special status record
+  lastState.uniqueUserCount = pool.uniqueUserCount
+  lastState.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount
+  lastState.txCount = poolDayData.txCount
+  lastState.feesUSD = poolDayData.feesUSD
+  lastState.volumeUSD = poolDayData.volumeUSD
+  lastState.tvlUSD = poolDayData.tvlUSD
+
+  // Ensure the growth fields are also initialized
+  lastState.uniqueUserCountGrowth = ZERO_BI
+  lastState.uniqueLiquidityProviderCountGrowth = ZERO_BI
+  lastState.txCountGrowth = ZERO_BI
+  lastState.feesUSDGrowth = ZERO_BD
+  lastState.volumeUSDGrowth = ZERO_BD
+  lastState.tvlUSDGrowth = ZERO_BD
   return poolDayData as PoolDayData
 }
 
@@ -344,7 +400,14 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   const dayID = timestamp / 86400
   const dayStartTimestamp = dayID * 86400
   const hookDayID = hook.id + '-' + dayID.toString()
+
+  // Get the special status record (dayId = 0)
+  const lastStateID = hook.id + '-0'
+  let lastState = HookDayData.load(lastStateID)
+
+  // Load the current HookDayData
   let hookDayData = HookDayData.load(hookDayID)
+
   if (hookDayData === null) {
     hookDayData = new HookDayData(hookDayID)
     hookDayData.date = dayStartTimestamp
@@ -360,6 +423,14 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
     hookDayData.uniqueLiquidityProviderCount = ZERO_BI
     hookDayData.totalValueLockedETHUntracked = ZERO_BD
     hookDayData.totalValueLockedUSDUntracked = ZERO_BD
+
+    hookDayData.poolCountGrowth = ZERO_BI
+    hookDayData.totalValueLockedUSDGrowth = ZERO_BD
+    hookDayData.tradingVolumeUSDGrowth = ZERO_BD
+    hookDayData.untrackedTradingVolumeUSDGrowth = ZERO_BD
+    hookDayData.totalValueLockedUSDUntrackedGrowth = ZERO_BD
+    hookDayData.uniqueUserCountGrowth = ZERO_BI
+    hookDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
   }
 
   hookDayData.poolCount = hook.poolCount
@@ -374,6 +445,83 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   hookDayData.uniqueUserCount = hook.uniqueUserCount
   hookDayData.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount
 
+  //Calculate growth
+  if (lastState !== null) {
+    //Calculate the growth using special state records
+    hookDayData.poolCountGrowth = hook.poolCount.minus(lastState.poolCount)
+    hookDayData.totalValueLockedUSDGrowth = hook.totalValueLockedUSD.minus(lastState.totalValueLockedUSD)
+    hookDayData.tradingVolumeUSDGrowth = hook.tradingVolumeUSD.minus(lastState.tradingVolumeUSD)
+    hookDayData.untrackedTradingVolumeUSDGrowth = hook.untrackedTradingVolumeUSD.minus(
+      lastState.untrackedTradingVolumeUSD,
+    )
+    hookDayData.totalValueLockedUSDUntrackedGrowth = hook.totalValueLockedUSDUntracked.minus(
+      lastState.totalValueLockedUSDUntracked,
+    )
+    hookDayData.uniqueUserCountGrowth = hook.uniqueUserCount.minus(lastState.uniqueUserCount)
+    hookDayData.uniqueLiquidityProviderCountGrowth = hook.uniqueLiquidityProviderCount.minus(
+      lastState.uniqueLiquidityProviderCount,
+    )
+  } else {
+    // If there are no special status records, the growth is zero
+    hookDayData.poolCountGrowth = ZERO_BI
+    hookDayData.totalValueLockedUSDGrowth = ZERO_BD
+    hookDayData.tradingVolumeUSDGrowth = ZERO_BD
+    hookDayData.untrackedTradingVolumeUSDGrowth = ZERO_BD
+    hookDayData.totalValueLockedUSDUntrackedGrowth = ZERO_BD
+    hookDayData.uniqueUserCountGrowth = ZERO_BI
+    hookDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
+  }
+
   hookDayData.save()
+
+  // Update the special status record (dayId = 0)
+  if (lastState === null) {
+    lastState = new HookDayData(lastStateID)
+    lastState.date = 0 // 使用 0 作为特殊标记
+    lastState.hook = hook.id
+    // 初始化所有必需字段
+    lastState.poolCount = ZERO_BI
+    lastState.volumeUSD = ZERO_BD
+    lastState.feesUSD = ZERO_BD
+    lastState.totalValueLockedETH = ZERO_BD
+    lastState.totalValueLockedUSD = ZERO_BD
+    lastState.tradingVolumeUSD = ZERO_BD
+    lastState.untrackedTradingVolumeUSD = ZERO_BD
+    lastState.uniqueUserCount = ZERO_BI
+    lastState.uniqueLiquidityProviderCount = ZERO_BI
+    lastState.totalValueLockedETHUntracked = ZERO_BD
+    lastState.totalValueLockedUSDUntracked = ZERO_BD
+    lastState.poolCountGrowth = ZERO_BI
+    lastState.totalValueLockedUSDGrowth = ZERO_BD
+    lastState.tradingVolumeUSDGrowth = ZERO_BD
+    lastState.untrackedTradingVolumeUSDGrowth = ZERO_BD
+    lastState.uniqueUserCountGrowth = ZERO_BI
+    lastState.uniqueLiquidityProviderCountGrowth = ZERO_BI
+  }
+
+  // Copy the current values to the special status record
+  lastState.poolCount = hook.poolCount
+  lastState.volumeUSD = hook.volumeUSD
+  lastState.feesUSD = hook.feesUSD
+  lastState.totalValueLockedETH = hook.totalValueLockedETH
+  lastState.totalValueLockedUSD = hook.totalValueLockedUSD
+  lastState.tradingVolumeUSD = hook.tradingVolumeUSD
+  lastState.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD
+  lastState.totalValueLockedETHUntracked = hook.totalValueLockedETHUntracked
+  lastState.totalValueLockedUSDUntracked = hook.totalValueLockedUSDUntracked
+  lastState.uniqueUserCount = hook.uniqueUserCount
+  lastState.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount
+
+  // Ensure the growth fields are also initialized
+  lastState.poolCountGrowth = ZERO_BI
+  lastState.totalValueLockedUSDGrowth = ZERO_BD
+  lastState.tradingVolumeUSDGrowth = ZERO_BD
+  lastState.untrackedTradingVolumeUSDGrowth = ZERO_BD
+  lastState.totalValueLockedUSDUntrackedGrowth = ZERO_BD
+  lastState.uniqueUserCountGrowth = ZERO_BI
+  lastState.uniqueLiquidityProviderCountGrowth = ZERO_BI
+
+  lastState.save()
+
   return hookDayData as HookDayData
 }

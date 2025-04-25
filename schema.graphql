@@ -334,7 +334,18 @@ type PoolDayData @entity {
   uniqueUserCount: BigInt!
   # total number of unique users who have liquidity in this pool
   uniqueLiquidityProviderCount: BigInt!
-  
+  # 24-hour increment uniqueUserCountGrowth
+  uniqueUserCountGrowth: BigInt!
+  # 24-hour increment uniqueLiquidityProviderCountGrowth
+  uniqueLiquidityProviderCountGrowth: BigInt!
+  # 24-hour increment txCountGrowth
+  txCountGrowth: BigInt!
+  # 24-hour increment feesUSDGrowth
+  feesUSDGrowth: BigDecimal!
+  # 24-hour increment volumeUSDGrowth
+  volumeUSDGrowth: BigDecimal!
+  # 24-hour increment tvlUSDGrowth
+  tvlUSDGrowth: BigDecimal!
 }
 
 # hourly stats tracker for pool
