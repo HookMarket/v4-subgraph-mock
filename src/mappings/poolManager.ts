@@ -104,8 +104,9 @@ export function handleInitializeHelper(
       statszero.totalHookTradingVolumeUSD = ZERO_BD
       statszero.totalHookUntrackedTradingVolumeUSD = ZERO_BD
       statszero.totalHookValueLockedETH = ZERO_BD
+      statszero.totalHookValueLockedUSD = ZERO_BD
     }
-    if (event.params.hooks.toHexString() !== '0x0000000000000000000000000000000000000000') {
+    if (event.params.hooks.toHexString() != '0x0000000000000000000000000000000000000000') {
       stats.totalHookCount = stats.totalHookCount.plus(ONE_BI)
       stats.save()
     } else {
