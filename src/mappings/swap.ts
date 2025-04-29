@@ -46,7 +46,7 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const hook = Hook.load(pool.hooks)!
   log.debug('vikkko swap {} - hook.id: {}', [poolId, hook.id])
   const stats =
-    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
+    hook.id == '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
   if (!poolUser) {

@@ -53,7 +53,7 @@ export function handleModifyLiquidityHelper(
     hook.createdAtTimestamp.toString(),
   ])
   const stats =
-    hook.id === '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
+    hook.id == '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
 
   if (pool === null) {
     log.debug('handleModifyLiquidityHelper: pool not found {}', [poolId])
@@ -67,7 +67,7 @@ export function handleModifyLiquidityHelper(
 
   // if the pool user does not exist, create a new one
   let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
-  let hookUser = HookUser.load(hook.id + '-' + event.params.sender.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
 
   if (!poolUser) {
     poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
@@ -80,7 +80,7 @@ export function handleModifyLiquidityHelper(
   }
 
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
     hookUser.hook = hook.id
     hookUser.user = event.params.sender
     hookUser.uniqueUserPoolCount = ZERO_BI

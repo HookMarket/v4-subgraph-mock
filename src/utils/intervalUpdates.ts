@@ -1,4 +1,4 @@
-import { ethereum } from '@graphprotocol/graph-ts'
+import { BigDecimal, ethereum } from '@graphprotocol/graph-ts'
 
 import {
   Bundle,
@@ -46,16 +46,20 @@ export function updateUniswapDayData(event: ethereum.Event, poolId: string): Uni
 export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDayData {
   const timestamp = event.block.timestamp.toI32()
   const dayID = timestamp / 86400
+  const previousDayID = dayID - 1
   const dayStartTimestamp = dayID * 86400
   const dayPoolID = poolId.concat('-').concat(dayID.toString())
+  const previousDayPoolID = poolId.concat('-').concat(previousDayID.toString())
   const lastStateID = poolId.concat('-0')
   const pool = Pool.load(poolId)!
   let poolDayData = PoolDayData.load(dayPoolID)
+  let previousDayData = PoolDayData.load(previousDayPoolID)
   let lastState = PoolDayData.load(lastStateID)
   if (poolDayData === null) {
     poolDayData = new PoolDayData(dayPoolID)
     poolDayData.date = dayStartTimestamp
     poolDayData.pool = pool.id
+    poolDayData.hook = pool.hooks
     poolDayData.volumeToken0 = ZERO_BD
     poolDayData.volumeToken1 = ZERO_BD
     poolDayData.volumeUSD = ZERO_BD
@@ -73,6 +77,7 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
     poolDayData.feesUSDGrowth = ZERO_BD
     poolDayData.volumeUSDGrowth = ZERO_BD
     poolDayData.tvlUSDGrowth = ZERO_BD
+    poolDayData.apr = ZERO_BD
   }
 
   if (pool.token0Price.gt(poolDayData.high)) {
@@ -92,17 +97,24 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   poolDayData.txCount = poolDayData.txCount.plus(ONE_BI)
   poolDayData.uniqueUserCount = pool.uniqueUserCount
   poolDayData.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount
+  poolDayData.feesUSD = pool.feesUSD
+  poolDayData.volumeUSD = pool.volumeUSD
+
+  if (previousDayData === null && lastState !== null) {
+    previousDayData = lastState
+    previousDayData.save()
+  }
 
   //Calculate growth
-  if (lastState !== null) {
-    poolDayData.uniqueUserCountGrowth = pool.uniqueUserCount.minus(lastState.uniqueUserCount)
+  if (previousDayData !== null) {
+    poolDayData.uniqueUserCountGrowth = pool.uniqueUserCount.minus(previousDayData.uniqueUserCount)
     poolDayData.uniqueLiquidityProviderCountGrowth = pool.uniqueLiquidityProviderCount.minus(
-      lastState.uniqueLiquidityProviderCount,
+      previousDayData.uniqueLiquidityProviderCount,
     )
-    poolDayData.txCountGrowth = poolDayData.txCount.minus(lastState.txCount)
-    poolDayData.feesUSDGrowth = poolDayData.feesUSD.minus(lastState.feesUSD)
-    poolDayData.volumeUSDGrowth = poolDayData.volumeUSD.minus(lastState.volumeUSD)
-    poolDayData.tvlUSDGrowth = poolDayData.tvlUSD.minus(lastState.tvlUSD)
+    poolDayData.txCountGrowth = poolDayData.txCount.minus(previousDayData.txCount)
+    poolDayData.feesUSDGrowth = poolDayData.feesUSD.minus(previousDayData.feesUSD)
+    poolDayData.volumeUSDGrowth = poolDayData.volumeUSD.minus(previousDayData.volumeUSD)
+    poolDayData.tvlUSDGrowth = poolDayData.tvlUSD.minus(previousDayData.tvlUSD)
   } else {
     poolDayData.uniqueUserCountGrowth = ZERO_BI
     poolDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
@@ -110,6 +122,12 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
     poolDayData.feesUSDGrowth = ZERO_BD
     poolDayData.volumeUSDGrowth = ZERO_BD
     poolDayData.tvlUSDGrowth = ZERO_BD
+  }
+
+  if (poolDayData.tvlUSD.gt(ZERO_BD)) {
+    poolDayData.apr = poolDayData.feesUSDGrowth.times(BigDecimal.fromString('365')).div(poolDayData.tvlUSD)
+  } else {
+    poolDayData.apr = ZERO_BD
   }
 
   poolDayData.save()
@@ -128,11 +146,19 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   }
 
   // Copy the current values to the special status record
+  lastState.hook = poolDayData.hook
+  lastState.volumeUSD = poolDayData.volumeUSD
+  lastState.feesUSD = poolDayData.feesUSD
+  lastState.txCount = poolDayData.txCount
   lastState.uniqueUserCount = pool.uniqueUserCount
   lastState.uniqueLiquidityProviderCount = pool.uniqueLiquidityProviderCount
-  lastState.txCount = poolDayData.txCount
-  lastState.feesUSD = poolDayData.feesUSD
-  lastState.volumeUSD = poolDayData.volumeUSD
+  lastState.apr = poolDayData.apr
+
+  lastState.liquidity = poolDayData.liquidity
+  lastState.sqrtPrice = poolDayData.sqrtPrice
+  lastState.token0Price = poolDayData.token0Price
+  lastState.token1Price = poolDayData.token1Price
+  lastState.tick = poolDayData.tick
   lastState.tvlUSD = poolDayData.tvlUSD
 
   // Ensure the growth fields are also initialized
@@ -142,6 +168,8 @@ export function updatePoolDayData(poolId: string, event: ethereum.Event): PoolDa
   lastState.feesUSDGrowth = ZERO_BD
   lastState.volumeUSDGrowth = ZERO_BD
   lastState.tvlUSDGrowth = ZERO_BD
+
+  lastState.save()
   return poolDayData as PoolDayData
 }
 

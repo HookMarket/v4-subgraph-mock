@@ -300,6 +300,8 @@ type PoolDayData @entity {
   date: Int!
   # pointer to pool
   pool: Pool!
+  # hook
+  hook: Hook!
   # in range liquidity at end of period
   liquidity: BigInt!
   # current price tracker at end of period
@@ -346,6 +348,8 @@ type PoolDayData @entity {
   volumeUSDGrowth: BigDecimal!
   # 24-hour increment tvlUSDGrowth
   tvlUSDGrowth: BigDecimal!
+  # apr
+  apr: BigDecimal!
 }
 
 # hourly stats tracker for pool
