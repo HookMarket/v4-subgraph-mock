@@ -48,22 +48,22 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const stats =
     hook.id == '0x0000000000000000000000000000000000000000' ? Stats.load('statszero')! : Stats.load('stats')!
   // if the pool user does not exist, create a new one
-  let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
+  let poolUser = PoolUser.load(pool.id + '-' + event.transaction.from.toHexString())
   if (!poolUser) {
-    poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
+    poolUser = new PoolUser(pool.id + '-' + event.transaction.from.toHexString())
     poolUser.pool = pool.id
-    poolUser.user = event.params.sender
+    poolUser.user = event.transaction.from
     poolUser.totalValueLockedToken0 = ZERO_BD
     poolUser.totalValueLockedToken1 = ZERO_BD
     poolUser.firstInteractionTimestamp = event.block.timestamp
     pool.uniqueUserCount = pool.uniqueUserCount.plus(ONE_BI)
   }
 
-  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + event.transaction.from.toHexString())
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + event.transaction.from.toHexString())
     hookUser.hook = hook.id
-    hookUser.user = event.params.sender
+    hookUser.user = event.transaction.from
     hookUser.firstInteractionTimestamp = event.block.timestamp
     hookUser.uniqueUserPoolCount = ZERO_BI
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)

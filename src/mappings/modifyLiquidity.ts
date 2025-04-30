@@ -66,13 +66,13 @@ export function handleModifyLiquidityHelper(
   }
 
   // if the pool user does not exist, create a new one
-  let poolUser = PoolUser.load(pool.id + '-' + event.params.sender.toHexString())
-  let hookUser = HookUser.load(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
+  let poolUser = PoolUser.load(pool.id + '-' + event.transaction.from.toHexString())
+  let hookUser = HookUser.load(hook.id + '-' + event.transaction.from.toHexString())
 
   if (!poolUser) {
-    poolUser = new PoolUser(pool.id + '-' + event.params.sender.toHexString())
+    poolUser = new PoolUser(pool.id + '-' + event.transaction.from.toHexString())
     poolUser.pool = pool.id
-    poolUser.user = event.params.sender
+    poolUser.user = event.transaction.from
     poolUser.firstInteractionTimestamp = event.block.timestamp
     poolUser.totalValueLockedToken0 = ZERO_BD
     poolUser.totalValueLockedToken1 = ZERO_BD
@@ -80,9 +80,9 @@ export function handleModifyLiquidityHelper(
   }
 
   if (!hookUser) {
-    hookUser = new HookUser(hook.id + '-' + pool.id + '-' + event.params.sender.toHexString())
+    hookUser = new HookUser(hook.id + '-' + event.transaction.from.toHexString())
     hookUser.hook = hook.id
-    hookUser.user = event.params.sender
+    hookUser.user = event.transaction.from
     hookUser.uniqueUserPoolCount = ZERO_BI
     hookUser.firstInteractionTimestamp = event.block.timestamp
     hook.uniqueUserCount = hook.uniqueUserCount.plus(ONE_BI)
