@@ -53,8 +53,6 @@ export function handleInitializeHelper(
     poolManager.totalFeesETH = ZERO_BD
     poolManager.totalValueLockedETH = ZERO_BD
     poolManager.totalValueLockedUSD = ZERO_BD
-    poolManager.totalValueLockedUSDUntracked = ZERO_BD
-    poolManager.totalValueLockedETHUntracked = ZERO_BD
     poolManager.txCount = ZERO_BI
     poolManager.owner = ADDRESS_ZERO
 
@@ -80,8 +78,6 @@ export function handleInitializeHelper(
     hook.totalValueLockedETH = ZERO_BD
     hook.tradingVolumeUSD = ZERO_BD
     hook.untrackedTradingVolumeUSD = ZERO_BD
-    hook.totalValueLockedETHUntracked = ZERO_BD
-    hook.totalValueLockedUSDUntracked = ZERO_BD
     hook.uniqueUserCount = ZERO_BI
     hook.uniqueLiquidityProviderCount = ZERO_BI
     if (stats === null) {
@@ -144,7 +140,6 @@ export function handleInitializeHelper(
     token0.untrackedVolumeUSD = ZERO_BD
     token0.totalValueLocked = ZERO_BD
     token0.totalValueLockedUSD = ZERO_BD
-    token0.totalValueLockedUSDUntracked = ZERO_BD
     token0.txCount = ZERO_BI
     token0.poolCount = ZERO_BI
     token0.whitelistPools = []
@@ -170,7 +165,6 @@ export function handleInitializeHelper(
     token1.feesUSD = ZERO_BD
     token1.totalValueLocked = ZERO_BD
     token1.totalValueLockedUSD = ZERO_BD
-    token1.totalValueLockedUSDUntracked = ZERO_BD
     token1.txCount = ZERO_BI
     token1.poolCount = ZERO_BI
     token1.whitelistPools = []
@@ -205,7 +199,6 @@ export function handleInitializeHelper(
   pool.totalValueLockedToken1 = ZERO_BD
   pool.totalValueLockedUSD = ZERO_BD
   pool.totalValueLockedETH = ZERO_BD
-  pool.totalValueLockedUSDUntracked = ZERO_BD
   pool.volumeToken0 = ZERO_BD
   pool.volumeToken1 = ZERO_BD
   pool.volumeUSD = ZERO_BD

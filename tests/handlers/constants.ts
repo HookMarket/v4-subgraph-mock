@@ -272,7 +272,6 @@ export const createAndStoreTestPool = (poolFixture: PoolFixture): Pool => {
   pool.totalValueLockedToken1 = ZERO_BD
   pool.totalValueLockedUSD = ZERO_BD
   pool.totalValueLockedETH = ZERO_BD
-  pool.totalValueLockedUSDUntracked = ZERO_BD
   pool.hooks = ADDRESS_ZERO
 
   pool.save()
@@ -293,7 +292,6 @@ export const createAndStoreTestToken = (tokenFixture: TokenFixture): Token => {
   token.poolCount = ZERO_BI
   token.totalValueLocked = ZERO_BD
   token.totalValueLockedUSD = ZERO_BD
-  token.totalValueLockedUSDUntracked = ZERO_BD
   token.derivedETH = ZERO_BD
   token.whitelistPools = []
 

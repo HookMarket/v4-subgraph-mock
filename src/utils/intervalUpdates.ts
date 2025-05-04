@@ -449,14 +449,11 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
     hookDayData.untrackedTradingVolumeUSD = ZERO_BD
     hookDayData.uniqueUserCount = ZERO_BI
     hookDayData.uniqueLiquidityProviderCount = ZERO_BI
-    hookDayData.totalValueLockedETHUntracked = ZERO_BD
-    hookDayData.totalValueLockedUSDUntracked = ZERO_BD
 
     hookDayData.poolCountGrowth = ZERO_BI
     hookDayData.totalValueLockedUSDGrowth = ZERO_BD
     hookDayData.tradingVolumeUSDGrowth = ZERO_BD
     hookDayData.untrackedTradingVolumeUSDGrowth = ZERO_BD
-    hookDayData.totalValueLockedUSDUntrackedGrowth = ZERO_BD
     hookDayData.uniqueUserCountGrowth = ZERO_BI
     hookDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
   }
@@ -468,8 +465,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   hookDayData.totalValueLockedUSD = hook.totalValueLockedUSD
   hookDayData.tradingVolumeUSD = hook.tradingVolumeUSD
   hookDayData.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD
-  hookDayData.totalValueLockedETHUntracked = hook.totalValueLockedETHUntracked
-  hookDayData.totalValueLockedUSDUntracked = hook.totalValueLockedUSDUntracked
   hookDayData.uniqueUserCount = hook.uniqueUserCount
   hookDayData.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount
 
@@ -482,9 +477,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
     hookDayData.untrackedTradingVolumeUSDGrowth = hook.untrackedTradingVolumeUSD.minus(
       lastState.untrackedTradingVolumeUSD,
     )
-    hookDayData.totalValueLockedUSDUntrackedGrowth = hook.totalValueLockedUSDUntracked.minus(
-      lastState.totalValueLockedUSDUntracked,
-    )
     hookDayData.uniqueUserCountGrowth = hook.uniqueUserCount.minus(lastState.uniqueUserCount)
     hookDayData.uniqueLiquidityProviderCountGrowth = hook.uniqueLiquidityProviderCount.minus(
       lastState.uniqueLiquidityProviderCount,
@@ -495,7 +487,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
     hookDayData.totalValueLockedUSDGrowth = ZERO_BD
     hookDayData.tradingVolumeUSDGrowth = ZERO_BD
     hookDayData.untrackedTradingVolumeUSDGrowth = ZERO_BD
-    hookDayData.totalValueLockedUSDUntrackedGrowth = ZERO_BD
     hookDayData.uniqueUserCountGrowth = ZERO_BI
     hookDayData.uniqueLiquidityProviderCountGrowth = ZERO_BI
   }
@@ -517,8 +508,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
     lastState.untrackedTradingVolumeUSD = ZERO_BD
     lastState.uniqueUserCount = ZERO_BI
     lastState.uniqueLiquidityProviderCount = ZERO_BI
-    lastState.totalValueLockedETHUntracked = ZERO_BD
-    lastState.totalValueLockedUSDUntracked = ZERO_BD
     lastState.poolCountGrowth = ZERO_BI
     lastState.totalValueLockedUSDGrowth = ZERO_BD
     lastState.tradingVolumeUSDGrowth = ZERO_BD
@@ -535,8 +524,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   lastState.totalValueLockedUSD = hook.totalValueLockedUSD
   lastState.tradingVolumeUSD = hook.tradingVolumeUSD
   lastState.untrackedTradingVolumeUSD = hook.untrackedTradingVolumeUSD
-  lastState.totalValueLockedETHUntracked = hook.totalValueLockedETHUntracked
-  lastState.totalValueLockedUSDUntracked = hook.totalValueLockedUSDUntracked
   lastState.uniqueUserCount = hook.uniqueUserCount
   lastState.uniqueLiquidityProviderCount = hook.uniqueLiquidityProviderCount
 
@@ -545,7 +532,6 @@ export function updateHookDayData(hook: Hook, event: ethereum.Event): HookDayDat
   lastState.totalValueLockedUSDGrowth = ZERO_BD
   lastState.tradingVolumeUSDGrowth = ZERO_BD
   lastState.untrackedTradingVolumeUSDGrowth = ZERO_BD
-  lastState.totalValueLockedUSDUntrackedGrowth = ZERO_BD
   lastState.uniqueUserCountGrowth = ZERO_BI
   lastState.uniqueLiquidityProviderCountGrowth = ZERO_BI
 

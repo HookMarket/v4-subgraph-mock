@@ -19,10 +19,6 @@ type PoolManager @entity {
   totalValueLockedUSD: BigDecimal!
   # TVL derived in ETH
   totalValueLockedETH: BigDecimal!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
-  # TVL derived in ETH untracked
-  totalValueLockedETHUntracked: BigDecimal!
   # current owner of the factory
   owner: ID!
 }
@@ -61,8 +57,6 @@ type Token @entity {
   totalValueLocked: BigDecimal!
   # liquidity across all pools in derived USD
   totalValueLockedUSD: BigDecimal!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
   # Note: for chains where ETH is not the native token, this will be the derived
   # price of that chain's native token, effectively, this should be renamed
   # derivedNative
@@ -141,8 +135,6 @@ type Pool @entity {
   totalValueLockedETH: BigDecimal!
   # tvl USD
   totalValueLockedUSD: BigDecimal!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
   # users who have interacted with this pool
   poolUsers: [PoolUser!]! @derivedFrom(field: "pool")
   # total number of unique users who have interacted with this pool
@@ -627,10 +619,6 @@ type Hook @entity {
   tradingVolumeUSD: BigDecimal!
   # untracked trading volume in USD for all pools using this Hook
   untrackedTradingVolumeUSD: BigDecimal!
-  # total value locked in ETH for all pools using this hook
-  totalValueLockedETHUntracked: BigDecimal!
-  # total value locked in USD for all pools using this hook
-  totalValueLockedUSDUntracked: BigDecimal!
   # total number of unique users who have interacted with all pools using this hook
   uniqueUserCount: BigInt!
   # total number of unique users who have provided liquidity in all pools using this hook
@@ -718,10 +706,6 @@ type HookDayData @entity {
   tradingVolumeUSD: BigDecimal!
   # untracked trading volume in USD for all pools using this Hook
   untrackedTradingVolumeUSD: BigDecimal!
-  # total value locked in ETH for all pools using this hook
-  totalValueLockedETHUntracked: BigDecimal!
-  # total value locked in USD for all pools using this hook
-  totalValueLockedUSDUntracked: BigDecimal!
   # total number of unique users who have interacted with all pools using this hook
   uniqueUserCount: BigInt!
   # total number of unique users who have provided liquidity in all pools using this hook
@@ -734,8 +718,6 @@ type HookDayData @entity {
   tradingVolumeUSDGrowth: BigDecimal!
   # 24-hour increment of untracked trading volume in USD for all pools using this hook
   untrackedTradingVolumeUSDGrowth: BigDecimal!
-  # 24-hour increment totalValueLockedUSDUntracked
-  totalValueLockedUSDUntrackedGrowth: BigDecimal!
   # 24-hour increment uniqueUserCount
   uniqueUserCountGrowth: BigInt!
   # 24-hour increment uniqueLiquidityProviderCount
