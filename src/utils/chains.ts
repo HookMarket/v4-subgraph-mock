@@ -432,6 +432,7 @@ export function getSubgraphConfig(): SubgraphConfig {
         '0xdac17f958d2ee523a2206206994597c13d831ec7', // USDT
         '0x0000000000085d4780b73119b644ae5ecd22b376', // TUSD
         '0x956f47f50a910163d8bf957cf5846d573e7f87ca', // FEI
+        '0x66a1e37c9b0eaddca17d3662d6c05f4decf3e110',
       ],
       whitelistTokens: [
         '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH
@@ -456,6 +457,7 @@ export function getSubgraphConfig(): SubgraphConfig {
         '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9', // AAVE
         '0xfe2e637202056d30016725477c5da089ab0a043a', // sETH2
         '0x0000000000000000000000000000000000000000', // Native ETH
+        '0x66a1e37c9b0eaddca17d3662d6c05f4decf3e110',
       ],
       tokenOverrides: [
         {
