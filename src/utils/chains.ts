@@ -227,6 +227,7 @@ export function getSubgraphConfig(): SubgraphConfig {
         '0x4200000000000000000000000000000000000006', // WETH
         '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC
         '0x0000000000000000000000000000000000000000', // Native ETH
+        '0x000000000d564d5be76f7f0d28fe52605afc7cf8', // flETH
       ],
       tokenOverrides: [],
       poolsToSkip: [],
@@ -458,6 +459,12 @@ export function getSubgraphConfig(): SubgraphConfig {
         '0xfe2e637202056d30016725477c5da089ab0a043a', // sETH2
         '0x0000000000000000000000000000000000000000', // Native ETH
         '0x66a1e37c9b0eaddca17d3662d6c05f4decf3e110',
+        '0xfa2b947eec368f42195f24f36d2af29f7c24cec2',
+        '0x657d9aba1dbb59e53f9f3ecaa878447dcfc96dcb',
+        '0x6c0aeceedc55c9d55d8b99216a670d85330941c3',
+        '0x000000c396558ffbab5ea628f39658bdf61345b3',
+
+        // FRAX
       ],
       tokenOverrides: [
         {
