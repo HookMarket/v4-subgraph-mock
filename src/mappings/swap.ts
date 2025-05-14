@@ -74,6 +74,22 @@ export function handleSwapHelper(event: SwapEvent, subgraphConfig: SubgraphConfi
   const token1 = Token.load(pool.token1)
 
   if (token0 && token1) {
+    // update white listed pools
+    if (whitelistTokens.includes(token0.id)) {
+      const newPools = token1.whitelistPools
+      if (!newPools.includes(pool.id)) {
+        newPools.push(pool.id)
+        token1.whitelistPools = newPools
+      }
+    }
+    if (whitelistTokens.includes(token1.id)) {
+      const newPools = token0.whitelistPools
+      if (!newPools.includes(pool.id)) {
+        newPools.push(pool.id)
+        token0.whitelistPools = newPools
+      }
+    }
+
     // amounts - 0/1 are token deltas: can be positive or negative
     // Unlike V3, a negative amount represents that amount is being sent to the pool and vice versa, so invert the sign
     const amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals).times(BigDecimal.fromString('-1'))

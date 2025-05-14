@@ -6,14 +6,17 @@ schema:
 features:
   - nonFatalErrors
   - grafting
+graft:
+  base: QmTmUudomV4oSZrsSoTwmeetgCZwVoa7EVMrnici8HXGmz
+  block: 30201500
 dataSources:
   - kind: ethereum/contract
     name: PoolManager
-    network: unichain
+    network: base
     source:
       abi: PoolManager
-      address: "0x1f98400000000000000000000000000000000004"
-      startBlock: 0
+      address: "0x498581ff718922c3f8e6a244956af099b2652b2b"
+      startBlock: 25350988
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -43,11 +46,11 @@ dataSources:
           handler: handleSwap
   - kind: ethereum/contract
     name: PositionManager
-    network: unichain
+    network: base
     source:
       abi: PositionManager
-      address: "0x4529a01c7a0410167c5740c487a8de60232617bf"
-      startBlock: 0
+      address: "0x7c5f5a4bbd8fd63184577525326123b519429bdc"
+      startBlock: 25350993
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

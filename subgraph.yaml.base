@@ -6,6 +6,9 @@ schema:
 features:
   - nonFatalErrors
   - grafting
+graft:
+  base: QmdNbzLt1LxY5zQam1Mp7bY1fMiHVRw1AwHwtwZhyMWNq2
+  block: 30171550
 dataSources:
   - kind: ethereum/contract
     name: PoolManager

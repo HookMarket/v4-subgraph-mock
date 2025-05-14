@@ -41,6 +41,7 @@ export function handleModifyLiquidityHelper(
   subgraphConfig: SubgraphConfig = getSubgraphConfig(),
 ): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress
+  const whitelistTokens = subgraphConfig.whitelistTokens
 
   const bundle = Bundle.load('1')!
   const poolId = event.params.id.toHexString()
@@ -101,6 +102,22 @@ export function handleModifyLiquidityHelper(
   const token1 = Token.load(pool.token1)
 
   if (token0 && token1) {
+    if (whitelistTokens.includes(token0.id)) {
+      const newPools = token1.whitelistPools
+      if (!newPools.includes(pool.id)) {
+        newPools.push(pool.id)
+        token1.whitelistPools = newPools
+      }
+    }
+
+    if (whitelistTokens.includes(token1.id)) {
+      const newPools = token0.whitelistPools
+      if (!newPools.includes(pool.id)) {
+        newPools.push(pool.id)
+        token0.whitelistPools = newPools
+      }
+    }
+
     const currTick: i32 = pool.tick!.toI32()
     const currSqrtPriceX96 = pool.sqrtPrice
 
